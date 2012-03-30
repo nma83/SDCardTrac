@@ -44,7 +44,8 @@ public class FileObserverService extends Service {
         boolean locError = false;
         
         try {
-        	if (hookObs) { // Place observer on even levels
+        	if (hookObs) { // Place observer on even levels, this *doesnt* work, so place on all
+        		// The even level strategy would work if FileObserver operation was as it is documented
         		// Observer will call queueEvent(filePath, eventMask) of this service
         		UsageFileObserver currObs = new UsageFileObserver(fromDir.getPath(), FOBS_EVENTS_TO_LISTEN, this);
         		fobsList.add(currObs); // ID of this observer is the list index
@@ -61,7 +62,7 @@ public class FileObserverService extends Service {
         		if (i.isDirectory()) {
         			// Recursive call
         			//Log.d(this.getClass().getName(), "Getting into " + i.getPath());
-        			locError = parseDirAndHook(i, !hookObs);
+        			locError = parseDirAndHook(i, hookObs);
         		}
         	}
         }
@@ -73,7 +74,16 @@ public class FileObserverService extends Service {
         ObservedEvent currEvent = new ObservedEvent();
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
         eventsList.add(currEvent);
-        // Look at any FileObserver manipulations needed due to file updates
+        // Look at any FileObserver manipulations needed due to file/directory updates
+        // Hook up observer if a new directory is created
+        if ((eventMask | FileObserver.CREATE) != 0 || 
+        		(eventMask | FileObserver.MOVED_TO) != 0) {
+        	File chkDir = new File(filePath);
+        	if (chkDir.isDirectory()) {
+        		parseDirAndHook(chkDir, true);
+        	}
+        	fobsList.get(fobsList.size() - 1).startWatching();
+        }
     }
 
     @Override
