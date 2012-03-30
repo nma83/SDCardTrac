@@ -15,8 +15,9 @@ import android.util.Log;
 public class FileObserverService extends Service {
 
     private List <UsageFileObserver> fobsList; // List of FileObserver objects, must always be referenced by Service in order for the hooks to work
-    private static final int FOBS_EVENTS_TO_LISTEN = (FileObserver.CLOSE_WRITE | FileObserver.CREATE | FileObserver.DELETE | 
-                                FileObserver.MOVED_FROM | FileObserver.MOVED_TO); // Event mask
+    private static final int FOBS_EVENTS_TO_LISTEN = 
+    		(FileObserver.MODIFY | FileObserver.CREATE | FileObserver.DELETE | 
+    		 FileObserver.MOVED_FROM | FileObserver.MOVED_TO); // Event mask
 
     private int numObs;
     
@@ -41,28 +42,30 @@ public class FileObserverService extends Service {
     boolean parseDirAndHook (File fromDir, boolean hookObs)
     {
         boolean locError = false;
-     
-        for (File i : fromDir.listFiles()) {
-            try {
-            	if (i.isDirectory()) {
-            		// Recursive call
-            		locError = parseDirAndHook(i, !hookObs);
-            		if (hookObs && !locError) { // Place observer on even levels
-            			// Observer will call queueEvent(filePath, eventMask) of this service
-            			UsageFileObserver currObs = new UsageFileObserver(i.getPath(), FOBS_EVENTS_TO_LISTEN, this);
-            			fobsList.add(currObs); // ID of this observer is the list index
-            			numObs++;
-            			Log.d(this.getClass().getName(), "Hooking to " + i.getPath());
-            			currObs.startWatching();
-            		}
-            	}
-            } catch (NullPointerException e) {
-            	locError = true;
-            	Log.e(this.getClass().getName(), "Error hooking to " + i.getPath() + "=" + e.toString());
-            }
+        
+        try {
+        	if (hookObs) { // Place observer on even levels
+        		// Observer will call queueEvent(filePath, eventMask) of this service
+        		UsageFileObserver currObs = new UsageFileObserver(fromDir.getPath(), FOBS_EVENTS_TO_LISTEN, this);
+        		fobsList.add(currObs); // ID of this observer is the list index
+        		numObs++;
+        		Log.d(this.getClass().getName(), "Hooking to " + fromDir.getPath());
+        	}
+        } catch (NullPointerException e) {
+        	locError = true;
+        	Log.e(this.getClass().getName(), "Error hooking to " + fromDir.getPath() + "=" + e.toString());
         }
         
-
+        if (!locError && (fromDir != null) && (fromDir.listFiles() != null)) {
+        	for (File i : fromDir.listFiles()) {
+        		if (i.isDirectory()) {
+        			// Recursive call
+        			//Log.d(this.getClass().getName(), "Getting into " + i.getPath());
+        			locError = parseDirAndHook(i, !hookObs);
+        		}
+        	}
+        }
+        
         return locError;
     }
 
@@ -73,8 +76,9 @@ public class FileObserverService extends Service {
         // Look at any FileObserver manipulations needed due to file updates
     }
 
-    public int onStartCommand(Intent intent, int flags, int startId) {
-    	Log.d(this.getClass().getName(), "Starting the service");
+    @Override
+    public void onCreate() {
+    	Log.d(this.getClass().getName(), "Creating the service");
         // First call to above parser from interface
     	numObs = 0;
     	fobsList = new ArrayList <UsageFileObserver> ();
@@ -82,9 +86,25 @@ public class FileObserverService extends Service {
         parseDirAndHook(Environment.getExternalStorageDirectory(), true);
 
         Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
+    }
+    
+    public int onStartCommand(Intent intent, int flags, int startId) {
+    	for (UsageFileObserver i : fobsList) {
+    		i.startWatching();
+    	}
+    	Log.d(this.getClass().getName(), "Started watching...");
+    	
         return START_STICKY; // Continue running after return
     }
 
+    @Override
+    public void onDestroy() {
+    	for (UsageFileObserver i : fobsList) {
+    		i.stopWatching();
+    	}
+    	Log.d(this.getClass().getName(), "Stopped watching...");
+    }
+    
     // Return handle to service so that tracker can collect events
     @Override
     public IBinder onBind(Intent intent) {
