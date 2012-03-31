@@ -18,6 +18,7 @@
             </intent-filter>
         </activity>
         <service android:name=".FileObserverService" />
+        <receiver android:process=":remote" android:name="DeltaCompute"></receiver>
     </application>
 
 </manifest>

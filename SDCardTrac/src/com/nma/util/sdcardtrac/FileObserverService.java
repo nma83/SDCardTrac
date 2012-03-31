@@ -70,14 +70,14 @@ public class FileObserverService extends Service {
         return locError;
     }
 
-    public void queueEvent(String filePath, int eventMask) {
+    public void queueEvent(String filePath, int eventMask, UsageFileObserver fileObs) {
         ObservedEvent currEvent = new ObservedEvent();
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
         eventsList.add(currEvent);
         // Look at any FileObserver manipulations needed due to file/directory updates
         // Hook up observer if a new directory is created
-        if ((eventMask | FileObserver.CREATE) != 0 || 
-        		(eventMask | FileObserver.MOVED_TO) != 0) {
+        if ((eventMask & FileObserver.CREATE) != 0 || 
+        		(eventMask & FileObserver.MOVED_TO) != 0) {
         	File chkDir = new File(filePath);
         	if (chkDir.isDirectory()) {
         		parseDirAndHook(chkDir, true);
@@ -98,11 +98,24 @@ public class FileObserverService extends Service {
         Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
     }
     
+    // Below is called on 2 occasions
+    // 1. From activity starting up the whole thing
+    // 2. From an alarm indicating to collect events
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	for (UsageFileObserver i : fobsList) {
-    		i.startWatching();
+    	// Decode the intent
+    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
+    	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) { // Restart by OS or activity
+    		for (UsageFileObserver i : fobsList) {
+    			i.startWatching();
+    		}
+    		Log.d(this.getClass().getName(), "Started watching...");
+    	} else if (intent != null) { // Other actions
+    		if (intent.getAction().equals(Intent.ACTION_VIEW)) { // Collect data
+    			Log.d(this.getClass().getName(), "Clearing " + eventsList.size() + " events");
+    			getAllEvents();
+    		}
     	}
-    	Log.d(this.getClass().getName(), "Started watching...");
     	
         return START_STICKY; // Continue running after return
     }
@@ -123,7 +136,8 @@ public class FileObserverService extends Service {
 
     // Consumer of eventsList
     public ObservedEvent[] getAllEvents () {
-        ObservedEvent[] retArr = (ObservedEvent[]) eventsList.toArray();
+    	ObservedEvent[] retArr = new ObservedEvent[eventsList.size()];
+    	eventsList.toArray(retArr);
         eventsList.clear();
         return retArr;
     }
