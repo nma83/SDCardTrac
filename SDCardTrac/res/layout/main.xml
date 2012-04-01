@@ -2,11 +2,140 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
     android:orientation="vertical" >
 
     <TextView
-        android:layout_width="fill_parent"
+        android:id="@+id/config_label"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/hello" />
+        android:gravity="center_horizontal"
+        android:text="Configuration"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/init_offset_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Initial offset to start watching (s) " />
+
+        <EditText
+            android:id="@+id/init_offset_value"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.3"
+            android:ems="10"
+            android:inputType="number"
+            android:singleLine="true" >
+
+            <requestFocus />
+        </EditText>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/update_interval_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tracker update interval (s) " />
+
+        <EditText
+            android:id="@+id/update_interval_value"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.3"
+            android:ems="10"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/apply_config_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="Apply" />
+
+        <Button
+            android:id="@+id/default_config_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="Restore defaults" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#FF0000FF" />
+
+    <TextView
+        android:id="@+id/background_control_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Background service control"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <ToggleButton
+        android:id="@+id/background_control_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textOn="File monitoring service enabled"
+        android:textOff="File monitoring service disabled" />
+
+    <Button
+        android:id="@+id/trigger_collect_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trigger event collection now!" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#FF0000FF" />
+
+    <TextView
+        android:id="@+id/view_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="View"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <Button
+        android:id="@+id/show_graph_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show storage history" />
+    
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#FF0000FF" />
+    
+    <RelativeLayout
+        android:id="@+id/app_control_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" >
+
+
+        <Button
+            android:id="@+id/exit_app_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Exit" />
+    </RelativeLayout>
 
 </LinearLayout>

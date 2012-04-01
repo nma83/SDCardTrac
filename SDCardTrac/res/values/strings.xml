@@ -3,5 +3,6 @@
 
     <string name="hello">Hello World, SDCardTracActivity!</string>
     <string name="app_name">SDCardTrac</string>
+    <string name="default_service_start_offset_in_s">10</string>
 
 </resources>
