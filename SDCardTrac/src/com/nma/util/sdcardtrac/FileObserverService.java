@@ -1,5 +1,6 @@
 package com.nma.util.sdcardtrac;
 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +21,17 @@ public class FileObserverService extends Service {
     		 FileObserver.MOVED_FROM | FileObserver.MOVED_TO); // Event mask
 
     private int numObs;
+    private DatabaseManager trackingDB;
     
     // Data-structure of a file event
     public class ObservedEvent {
         public String filePath = "";
         public int eventMask = 0;
+        public boolean duplicate = false;
+        
+        public boolean compareWith(ObservedEvent i) {
+        	return (filePath.equals(i.filePath) && (eventMask == i.eventMask));
+        }
     }
 
     private List <ObservedEvent> eventsList; // Periodically re-created list of events
@@ -39,6 +46,57 @@ public class FileObserverService extends Service {
     }
     private final IBinder locBinder = new TrackingBinder();
 
+    @Override
+    public void onCreate() {
+    	Log.d(this.getClass().getName(), "Creating the service");
+        // First call to above parser from interface
+    	numObs = 0;
+    	fobsList = new ArrayList <UsageFileObserver> ();
+    	eventsList = new ArrayList <ObservedEvent> ();
+        parseDirAndHook(Environment.getExternalStorageDirectory(), true);
+
+        // Create database handle
+        trackingDB = new DatabaseManager(this);
+        Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
+    }
+    
+    // Below is called on 2 occasions
+    // 1. From activity starting up the whole thing
+    // 2. From an alarm indicating to collect events
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+    	// Decode the intent
+    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
+    	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) { // Restart by OS or activity
+    		for (UsageFileObserver i : fobsList) {
+    			i.startWatching();
+    		}
+    		Log.d(this.getClass().getName(), "Started watching...");
+    	} else if (intent != null) { // Other actions
+    		if (intent.getAction().equals(Intent.ACTION_VIEW)) { // Collect data
+    			Log.d(this.getClass().getName(), "Clearing " + eventsList.size() + " events");
+    			storeAllEvents();
+    		}
+    	}
+    	
+        return START_STICKY; // Continue running after return
+    }
+
+    @Override
+    public void onDestroy() {
+    	for (UsageFileObserver i : fobsList) {
+    		i.stopWatching();
+    	}
+    	Log.d(this.getClass().getName(), "Stopped watching...");
+    }
+    
+    // Return handle to service so that tracker can collect events
+    @Override
+    public IBinder onBind(Intent intent) {
+        return locBinder;
+    }
+    
+    // Recursively hookup the FileObserver's
     boolean parseDirAndHook (File fromDir, boolean hookObs)
     {
         boolean locError = false;
@@ -70,9 +128,11 @@ public class FileObserverService extends Service {
         return locError;
     }
 
+    // Callback for event recording
     public void queueEvent(String filePath, int eventMask, UsageFileObserver fileObs) {
         ObservedEvent currEvent = new ObservedEvent();
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
+        currEvent.duplicate = false; // Will be updated while reporting
         eventsList.add(currEvent);
         // Look at any FileObserver manipulations needed due to file/directory updates
         // Hook up observer if a new directory is created
@@ -86,59 +146,67 @@ public class FileObserverService extends Service {
         }
     }
 
-    @Override
-    public void onCreate() {
-    	Log.d(this.getClass().getName(), "Creating the service");
-        // First call to above parser from interface
-    	numObs = 0;
-    	fobsList = new ArrayList <UsageFileObserver> ();
-    	eventsList = new ArrayList <ObservedEvent> ();
-        parseDirAndHook(Environment.getExternalStorageDirectory(), true);
-
-        Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
-    }
-    
-    // Below is called on 2 occasions
-    // 1. From activity starting up the whole thing
-    // 2. From an alarm indicating to collect events
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-    	// Decode the intent
-    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
-    	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) { // Restart by OS or activity
-    		for (UsageFileObserver i : fobsList) {
-    			i.startWatching();
-    		}
-    		Log.d(this.getClass().getName(), "Started watching...");
-    	} else if (intent != null) { // Other actions
-    		if (intent.getAction().equals(Intent.ACTION_VIEW)) { // Collect data
-    			Log.d(this.getClass().getName(), "Clearing " + eventsList.size() + " events");
-    			getAllEvents();
-    		}
+    // Consumer of eventsList
+    public void storeAllEvents () {
+    	String [] changeLog;
+    	int numLogs = 0;
+    	
+    	// Return if no events
+    	if (eventsList.size() == 0) {
+    		Log.w(this.getClass().getName(), "No events yet!");
+    		return;
     	}
     	
-        return START_STICKY; // Continue running after return
-    }
-
-    @Override
-    public void onDestroy() {
-    	for (UsageFileObserver i : fobsList) {
-    		i.stopWatching();
+    	// Get the space data
+    	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
+    	long freeSpace = Environment.getExternalStorageDirectory().getFreeSpace();
+    	long usedSpace = (totalSpace - freeSpace);
+    	
+    	// Compact the change log, remove duplicate entries
+    	// TODO: O(n^2) operation here, try to optimise, profile too
+    	for (ObservedEvent i : eventsList) {
+    		if (!i.duplicate) {
+    			for (ObservedEvent j : eventsList) {
+//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
+    				if (i.compareWith(j) && (i != j))
+    					j.duplicate = true;
+    			}
+    			numLogs++;
+    		}
+    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
     	}
-    	Log.d(this.getClass().getName(), "Stopped watching...");
-    }
-    
-    // Return handle to service so that tracker can collect events
-    @Override
-    public IBinder onBind(Intent intent) {
-        return locBinder;
-    }
 
-    // Consumer of eventsList
-    public ObservedEvent[] getAllEvents () {
-    	ObservedEvent[] retArr = new ObservedEvent[eventsList.size()];
-    	eventsList.toArray(retArr);
+        // Store in database
+        trackingDB.openToWrite();
+        changeLog = new String[numLogs];
+        numLogs = 0;
+        for (ObservedEvent i : eventsList) {
+        	if (!i.duplicate) {
+        		String changeTag = i.filePath;
+        		if ((i.eventMask & FileObserver.MODIFY) != 0)
+        			changeTag += " was modified";
+        		if ((i.eventMask & FileObserver.CREATE) != 0)
+        			changeTag += " was created";
+        		if ((i.eventMask & FileObserver.DELETE) != 0)
+        			changeTag += " was deleted";
+        		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
+        			changeTag += " was moved";
+        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
+        		changeLog[numLogs++] = changeTag;
+        	}
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (String s : changeLog)
+        {
+            sb.append(s);
+            sb.append("\n");
+        }
+        
+        Log.d(this.getClass().getName(), "Inserting row - " + sb.toString());
+        trackingDB.insert(System.currentTimeMillis(), (int)usedSpace, sb.toString());
+        trackingDB.close();
+        
         eventsList.clear();
-        return retArr;
     }
 }

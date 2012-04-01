@@ -14,9 +14,13 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class SDCardTracActivity extends Activity {
+	private static final int START_ALARM_OFFSET = 10;
+	
 	// Handle to running service
 	private FileObserverService.TrackingBinder serviceBind;
 	boolean boundToService = false;
+	// Handle to database
+	private DatabaseManager trackingDB;
 	
 	// Connection to service
 	private ServiceConnection serviceConn = new ServiceConnection() {
@@ -38,6 +42,8 @@ public class SDCardTracActivity extends Activity {
         setContentView(R.layout.main);
         // Setup the alarm
         setupEventCollection();
+        // Setup the database
+        trackingDB = new DatabaseManager(this);
     }
     
     @Override
@@ -49,6 +55,8 @@ public class SDCardTracActivity extends Activity {
     	startService(serviceIntent);
     	// Bind to service
     	bindService(serviceIntent, serviceConn, Context.BIND_AUTO_CREATE);
+    	// Open the database to read
+    	trackingDB.openToRead();
     }
     
     @Override
@@ -69,7 +77,7 @@ public class SDCardTracActivity extends Activity {
     	PendingIntent pendIntent = PendingIntent.getBroadcast(this, 0, triggerIntent, 0);
     	Calendar time = Calendar.getInstance();
     	time.setTimeInMillis(System.currentTimeMillis());
-    	time.add(Calendar.SECOND, 60);
+    	time.add(Calendar.SECOND, START_ALARM_OFFSET);
     	alarmEr.setInexactRepeating(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), 
     			(1000 * 30), pendIntent); //AlarmManager.INTERVAL_FIFTEEN_MINUTES
     	Log.d(this.getClass().getName(), "Done with alarm setup");
