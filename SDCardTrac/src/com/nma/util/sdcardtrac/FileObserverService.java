@@ -76,6 +76,8 @@ public class FileObserverService extends Service {
     		if (intent.getAction().equals(Intent.ACTION_VIEW)) { // Collect data
     			Log.d(this.getClass().getName(), "Clearing " + eventsList.size() + " events");
     			storeAllEvents();
+    		} else if (intent.getAction().equals(Intent.ACTION_DELETE)) {
+    			stopWatching();
     		}
     	}
     	
@@ -84,10 +86,7 @@ public class FileObserverService extends Service {
 
     @Override
     public void onDestroy() {
-    	for (UsageFileObserver i : fobsList) {
-    		i.stopWatching();
-    	}
-    	Log.d(this.getClass().getName(), "Stopped watching...");
+    	stopWatching();
     }
     
     // Return handle to service so that tracker can collect events
@@ -128,6 +127,14 @@ public class FileObserverService extends Service {
         return locError;
     }
 
+    // Stop watching
+    private void stopWatching() {
+    	for (UsageFileObserver i : fobsList) {
+    		i.stopWatching();
+    	}
+    	Log.d(this.getClass().getName(), "Stopped watching...");
+    }
+    
     // Callback for event recording
     public void queueEvent(String filePath, int eventMask, UsageFileObserver fileObs) {
         ObservedEvent currEvent = new ObservedEvent();
