@@ -22,6 +22,7 @@ public class GraphActivity extends Activity {
 	long startTime, endTime;
 	long maxStorage;
 	boolean lowerThanMax;
+	String prevDate;
 	
 	@Override
 	public void onCreate(Bundle savedInstance) {
@@ -34,6 +35,7 @@ public class GraphActivity extends Activity {
 		trackingDB = new DatabaseManager(this);
 		GraphViewSeries storageGraphData = getData();
 		// Plot it
+		prevDate = "";
 		GraphView storageGraph = new LineGraphView(this, "Storage History") {
 			@Override  
 			protected String formatLabel(double value, boolean isValueX) {
@@ -41,7 +43,13 @@ public class GraphActivity extends Activity {
 				
 				if (isValueX) { // Format time in human readable form
 					retValue = DateFormat.getDateInstance().format(new Date((long)value));
-					Log.d(getClass().getName(), "Date is : " + retValue);
+					if (retValue.equals(prevDate)) {
+						prevDate = retValue;
+						retValue = DateFormat.getTimeInstance().format(new Date((long)value));
+					} else {
+						prevDate = retValue;
+					}
+//					Log.d(getClass().getName(), "Date is : " + retValue);
 				} else { // Format size in human readable form
 					long scaling;
 					String suffix;
