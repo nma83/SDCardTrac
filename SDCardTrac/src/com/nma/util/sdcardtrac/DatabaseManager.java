@@ -1,3 +1,8 @@
+/*
+ * SDCardTrac application - keeps track of the /sdcard usage
+ * Copyright (C) 2012 Narendra M.A.
+*/
+
 package com.nma.util.sdcardtrac;
 
 import java.util.ArrayList;
