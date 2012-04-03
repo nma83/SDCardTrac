@@ -4,5 +4,13 @@
     <string name="hello">Hello World, SDCardTracActivity!</string>
     <string name="app_name">SDCardTrac</string>
     <string name="default_service_start_offset_in_s">10</string>
+    <string-array name="update_intervals_phase">
+        <item >15 minutes</item>
+        <item >30 minutes</item>
+        <item >1 hour</item>
+        <item >12 hours</item>
+        <item >24 hours</item>
+        <item >Custom (s)</item>
+    </string-array>
 
 </resources>

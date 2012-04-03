@@ -33,11 +33,16 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class SDCardTracActivity extends Activity implements OnClickListener {
+public class SDCardTracActivity extends Activity 
+	implements OnClickListener, OnItemSelectedListener {
 	private static final int DEFAULT_START_OFFSET_SEC = 10;
 	private static final long DEFAULT_UPDATE_INTERVAL_SEC = AlarmManager.INTERVAL_HALF_DAY;
 	
@@ -48,6 +53,7 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
 	private boolean alarmSetupDone = false;
 	private int storeStartOffset = DEFAULT_START_OFFSET_SEC;
 	private long storeTriggerInterval = DEFAULT_UPDATE_INTERVAL_SEC;
+	private int storeIntervalIndex = 0;
 	// Alarms
 	PendingIntent alarmIntent;
 	
@@ -93,8 +99,20 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
         
         // Set default state of UI
         ((ToggleButton)findViewById(R.id.background_control_toggle)).setChecked(alarmSetupDone);
+        ((Button)findViewById(R.id.trigger_collect_button)).setEnabled(alarmSetupDone);
         ((TextView)findViewById(R.id.init_offset_value)).setText(Integer.toString(storeStartOffset));
 		((TextView)findViewById(R.id.update_interval_value)).setText(Integer.toString((int)storeTriggerInterval));
+		if (storeIntervalIndex != 5) {
+			((TextView)findViewById(R.id.update_interval_value)).setEnabled(false);
+		}
+		// Setup the selector
+        Spinner intervalSel = (Spinner)findViewById(R.id.update_interval_select);
+        ArrayAdapter <CharSequence> defIntervals = ArrayAdapter.createFromResource(this,
+        		R.array.update_intervals_phase, android.R.layout.simple_spinner_item);
+        defIntervals.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        intervalSel.setAdapter(defIntervals);
+        intervalSel.setOnItemSelectedListener(this);
+		intervalSel.setSelection(storeIntervalIndex, true);
     }
     
     @Override
@@ -130,13 +148,26 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
     		startOffsetStr = ((TextView)findViewById(R.id.init_offset_value)).getText().toString();
     		triggerIntervalStr = ((TextView)findViewById(R.id.update_interval_value)).getText().toString();
     		storeStartOffset = Integer.parseInt(startOffsetStr);
-    		storeTriggerInterval = Long.parseLong(triggerIntervalStr);
+    		if (storeIntervalIndex == 5) {
+    			storeTriggerInterval = Long.parseLong(triggerIntervalStr);
+    		} else { // Get from spinner
+    			switch (storeIntervalIndex) {
+    			case 0: storeTriggerInterval = AlarmManager.INTERVAL_FIFTEEN_MINUTES; break;
+    			case 1: storeTriggerInterval = AlarmManager.INTERVAL_HALF_HOUR; break;
+    			case 2: storeTriggerInterval = AlarmManager.INTERVAL_HOUR; break;
+    			case 3: storeTriggerInterval = AlarmManager.INTERVAL_HALF_DAY; break;
+    			case 4: storeTriggerInterval = AlarmManager.INTERVAL_DAY; break;
+    			}
+    			((TextView)findViewById(R.id.update_interval_value)).setText(Long.toString(storeTriggerInterval));
+    		}
     		break;
     	case R.id.default_config_button:
     		((TextView)findViewById(R.id.init_offset_value)).setText(Integer.toString(DEFAULT_START_OFFSET_SEC));
     		((TextView)findViewById(R.id.update_interval_value)).setText(Integer.toString((int)DEFAULT_UPDATE_INTERVAL_SEC));
     		storeStartOffset = DEFAULT_START_OFFSET_SEC;
     		storeTriggerInterval = DEFAULT_UPDATE_INTERVAL_SEC;
+    		storeIntervalIndex = 3;
+    		((Spinner)findViewById(R.id.update_interval_select)).setSelection(storeIntervalIndex, true);
     		break;
     	case R.id.background_control_toggle:
     		checked = ((ToggleButton)findViewById(R.id.background_control_toggle)).isChecked();
@@ -160,6 +191,25 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
     	}
     }
     
+    // Selector
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View v, int pos,
+			long id) {
+		storeIntervalIndex = pos;
+		Log.d(getClass().getName(), "Select index : " + pos);
+		if (pos == 5) {
+			((TextView)findViewById(R.id.update_interval_value)).setEnabled(true);
+		} else {
+			((TextView)findViewById(R.id.update_interval_value)).setEnabled(false);
+		}
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
     // Helper methods
     // Restore the state
     private void restoreConfig() {
@@ -168,8 +218,9 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
         storeStartOffset = prefs.getInt("AlarmStartOffset", DEFAULT_START_OFFSET_SEC);
         storeTriggerInterval = prefs.getLong("AlarmTriggerInterval", DEFAULT_UPDATE_INTERVAL_SEC);
         alarmSetupDone = prefs.getBoolean("AlarmEnabled", true);
+        storeIntervalIndex = prefs.getInt("AlarmIntervalSelect", 3); // Index of half day
     	Log.d(getClass().getName(), "Restored: " + storeStartOffset + ", " + storeTriggerInterval + ", "
-    			+ alarmSetupDone);
+    			+ alarmSetupDone + ", " + storeIntervalIndex);
 
     }
 
@@ -180,9 +231,10 @@ public class SDCardTracActivity extends Activity implements OnClickListener {
     	prefEdit.putInt("AlarmStartOffset", storeStartOffset);
     	prefEdit.putLong("AlarmTriggerInterval", storeTriggerInterval);
     	prefEdit.putBoolean("AlarmEnabled", alarmSetupDone);
+    	prefEdit.putInt("AlarmIntervalSelect", storeIntervalIndex);
     	prefEdit.apply();
     	Log.d(getClass().getName(), "Applied: " + storeStartOffset + ", " + storeTriggerInterval + ", "
-    			+ alarmSetupDone);
+    			+ alarmSetupDone + ", " + storeIntervalIndex);
     }
     
     // Start the background service
