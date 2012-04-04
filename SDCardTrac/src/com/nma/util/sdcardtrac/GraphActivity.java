@@ -6,6 +6,7 @@
 package com.nma.util.sdcardtrac;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -15,6 +16,9 @@ import com.jjoe64.graphview.GraphView.GraphViewSeries;
 import com.jjoe64.graphview.LineGraphView;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -27,7 +31,11 @@ public class GraphActivity extends Activity {
 	long startTime, endTime;
 	long maxStorage;
 	boolean lowerThanMax;
+	String usageRatio;
 	String prevDate;
+	String [] logMessages;
+	int messageIndex;
+	private static final int DIALOG_CHANGELOG = 1;
 	
 	@Override
 	public void onCreate(Bundle savedInstance) {
@@ -37,11 +45,15 @@ public class GraphActivity extends Activity {
 		setContentView(R.layout.graph);
 		
 		// Get data from DB
+		// Show indefinite progress
+		ProgressDialog prog = ProgressDialog.show(this, "Storage history", "Fetching data...", true);
 		trackingDB = new DatabaseManager(this);
 		GraphViewSeries storageGraphData = getData();
+		prog.dismiss();
+		
 		// Plot it
 		prevDate = "";
-		GraphView storageGraph = new LineGraphView(this, "Storage History") {
+		GraphView storageGraph = new LineGraphView(this, "Storage History, " + usageRatio) {
 			@Override  
 			protected String formatLabel(double value, boolean isValueX) {
 				String retValue;
@@ -56,27 +68,21 @@ public class GraphActivity extends Activity {
 					}
 //					Log.d(getClass().getName(), "Date is : " + retValue);
 				} else { // Format size in human readable form
-					long scaling;
-					String suffix;
-					if ((value / 1000) < 1) { // Under a KB, keep as is
-						scaling = 1;
-						suffix = "B";
-					} else if ((value / 1000000) < 1) { // KB
-						scaling = 1000;
-						suffix = "KB";
-					} else if ((value / 1000000000) < 1) { // MB
-						scaling = 1000000;
-						suffix = "MB";
-					} else { // GB
-						scaling = 1000000000;
-						suffix = "GB";
-					}
-					retValue = Integer.toString((int)(value / scaling)) + suffix;
+					retValue = convertToStorageUnits(value);
 				}
 				//return super.formatLabel(value, isValueX); // let the y-value be normal-formatted
 				return retValue;
 			}
 		};
+		// Add selector callback
+		storageGraph.setSelectHandler(new GraphView.OnSelectHandler() {
+			@Override
+			protected void onSelect(int index) {
+				Log.d(getClass().getName(), "In select handler!! @ " + index);
+				messageIndex = index;
+				showDialog(DIALOG_CHANGELOG);
+			}
+		});
 
 		if (lowerThanMax) {
 			locColor = Color.rgb(100, 100, 0); // Current usage is lower than 70%
@@ -84,24 +90,41 @@ public class GraphActivity extends Activity {
 			locColor = Color.rgb(200, 0, 0);
 		}
 		// Add marker for maximum storage
-		GraphViewSeries maxStorageMark = new GraphViewSeries("Maximum storage", locColor,
-				new GraphViewData[] {
-					new GraphViewData(startTime, maxStorage),
-					new GraphViewData(endTime, maxStorage)
-		});
+//		GraphViewSeries maxStorageMark = new GraphViewSeries("Maximum storage", locColor,
+//				new GraphViewData[] {
+//					new GraphViewData(startTime, maxStorage),
+//					new GraphViewData(endTime, maxStorage)
+//		});
 		
 		// Add marker for 0
-		GraphViewSeries minStorageMark = new GraphViewSeries("Maximum storage", Color.rgb(0, 0, 0),
-				new GraphViewData[] {
-					new GraphViewData(startTime, 0),
-					new GraphViewData(endTime, 0)
-		});
+//		GraphViewSeries minStorageMark = new GraphViewSeries("Maximum storage", Color.rgb(0, 0, 0),
+//				new GraphViewData[] {
+//					new GraphViewData(startTime, 0),
+//					new GraphViewData(endTime, 0)
+//		});
 
-		
+		storageGraph.setManualYAxis(true);
+		storageGraph.setManualYAxisBounds(maxStorage, 0);
+		storageGraph.setScalable(true);
 		storageGraph.addSeries(storageGraphData);
-		storageGraph.addSeries(maxStorageMark);
-		storageGraph.addSeries(minStorageMark);
 		((LinearLayout)findViewById(R.id.graph_layout)).addView(storageGraph);
+	}
+	
+	// Dialog method
+	protected Dialog onCreateDialog(int id) {
+		Dialog ret;
+		if (id == DIALOG_CHANGELOG) {
+			String [] splitLog = logMessages[messageIndex].split("\n");
+			Log.d(getClass().getName(), "Got lines " + splitLog.length);
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage("Change log:\n" + logMessages[messageIndex])
+			       .setCancelable(true);
+			ret = builder.create();
+		} else {
+			ret = null;
+		}
+		
+		return ret;
 	}
 	
 	// Helpers
@@ -116,24 +139,30 @@ public class GraphActivity extends Activity {
 		GraphViewSeries retSeries;
 		Log.d(getClass().getName(), "Creating data of len " + dbData.size());
 		GraphViewData [] graphData = new GraphViewData[dbData.size()];
+		logMessages = new String[dbData.size()];
 		int i = 0;
 		for (ContentValues d : dbData) {
 			long timeStamp = Long.parseLong((String)d.get(DatabaseManager.ID_COLUMN));
 			int usage = Integer.parseInt((String)d.get(DatabaseManager.DELTA_COLUMN));
-			String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN); // TODO:
+			String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
+			logMessages[i] = changeLog;
+			
 			if (i == 0) startTime = timeStamp;
 			else if (i == (dbData.size() - 1)) endTime = timeStamp;
 			
 			graphData[i++] = new GraphViewData(timeStamp, usage);
 			if (usage > maxUsage) maxUsage = usage;
 			
-//			Log.d(getClass().getName(), "Added to graph : " + Long.parseLong(timeStamp)
-//					+ " - " + Integer.parseInt(usage));
+			Log.d(getClass().getName(), "Added to graph : " + timeStamp + " - " + changeLog);
 		}
 		
 		retSeries = new GraphViewSeries(graphData);
 		trackingDB.close();
 		maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
+
+		int usageRatioInt = (int)((maxUsage / maxStorage) * 100);
+		usageRatio = Integer.toString(usageRatioInt) + "% max used, total size "
+				+ convertToStorageUnits(maxStorage);
 		if ((maxUsage / maxStorage) < 0.7) {
 			maxStorage = maxUsage;
 			lowerThanMax = true;
@@ -142,5 +171,28 @@ public class GraphActivity extends Activity {
 		}
 		
 		return retSeries;
+	}
+	
+	private String convertToStorageUnits(double value) {
+		String retValue;
+		long scaling;
+		String suffix;
+		
+		if ((value / 1000) < 1) { // Under a KB, keep as is
+			scaling = 1;
+			suffix = "B";
+		} else if ((value / 1000000) < 1) { // KB
+			scaling = 1000;
+			suffix = "KB";
+		} else if ((value / 1000000000) < 1) { // MB
+			scaling = 1000000;
+			suffix = "MB";
+		} else { // GB
+			scaling = 1000000000;
+			suffix = "GB";
+		}
+		
+		retValue = new DecimalFormat("#.#").format((value / scaling)) + suffix;
+		return retValue;
 	}
 }
