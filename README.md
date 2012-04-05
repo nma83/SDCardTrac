@@ -16,5 +16,5 @@ Credits
 -------
 List of people who helped.
 
-* (GraphView)[https://github.com/jjoe64/GraphView] for plotting.
-* (File chooser)[http://www.dreamincode.net/forums/topic/190013-creating-simple-file-chooser/] used in the app.
+* [GraphView](https://github.com/jjoe64/GraphView) for plotting.
+* [File chooser](http://www.dreamincode.net/forums/topic/190013-creating-simple-file-chooser/) used in the app.
