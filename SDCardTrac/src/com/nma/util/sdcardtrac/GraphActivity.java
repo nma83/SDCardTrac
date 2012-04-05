@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
@@ -39,7 +40,6 @@ public class GraphActivity extends Activity {
 	
 	@Override
 	public void onCreate(Bundle savedInstance) {
-		int locColor;
 		
 		super.onCreate(savedInstance);
 		setContentView(R.layout.graph);
@@ -51,6 +51,22 @@ public class GraphActivity extends Activity {
 		GraphViewSeries storageGraphData = getData();
 		prog.dismiss();
 		
+		// Sanity check the data
+		if ((storageGraphData == null) || (logMessages.length < 1)) {
+			AlertDialog.Builder alertBuild = new AlertDialog.Builder(this);
+			alertBuild.setMessage("Database is empty! There seems to be no activity observed.")
+				.setCancelable(false)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						GraphActivity.this.finish();
+					}
+				});
+			AlertDialog alert = alertBuild.create();
+			alert.show();
+			return;
+		}
+		
 		// Plot it
 		prevDate = "";
 		GraphView storageGraph = new LineGraphView(this, "Storage History, " + usageRatio) {
@@ -59,12 +75,14 @@ public class GraphActivity extends Activity {
 				String retValue;
 				
 				if (isValueX) { // Format time in human readable form
-					retValue = DateFormat.getDateInstance().format(new Date((long)value));
+					Date currDate = new Date((long)value);
+					retValue = DateFormat.getDateInstance().format(currDate);
 					if (retValue.equals(prevDate)) {
 						prevDate = retValue;
-						retValue = DateFormat.getTimeInstance().format(new Date((long)value));
+						retValue = DateFormat.getTimeInstance().format(currDate);
 					} else {
-						prevDate = retValue;
+						retValue = DateFormat.getTimeInstance().format(currDate) + ";" + retValue;
+						prevDate = DateFormat.getDateInstance().format(currDate);
 					}
 //					Log.d(getClass().getName(), "Date is : " + retValue);
 				} else { // Format size in human readable form
@@ -84,11 +102,11 @@ public class GraphActivity extends Activity {
 			}
 		});
 
-		if (lowerThanMax) {
-			locColor = Color.rgb(100, 100, 0); // Current usage is lower than 70%
-		} else {
-			locColor = Color.rgb(200, 0, 0);
-		}
+//		if (lowerThanMax) {
+//			locColor = Color.rgb(100, 100, 0); // Current usage is lower than 70%
+//		} else {
+//			locColor = Color.rgb(200, 0, 0);
+//		}
 		// Add marker for maximum storage
 //		GraphViewSeries maxStorageMark = new GraphViewSeries("Maximum storage", locColor,
 //				new GraphViewData[] {
@@ -106,6 +124,7 @@ public class GraphActivity extends Activity {
 		storageGraph.setManualYAxis(true);
 		storageGraph.setManualYAxisBounds(maxStorage, 0);
 		storageGraph.setScalable(true);
+		storageGraph.setMultiLineXLabel(true, ";");
 		storageGraph.addSeries(storageGraphData);
 		((LinearLayout)findViewById(R.id.graph_layout)).addView(storageGraph);
 	}
@@ -114,10 +133,8 @@ public class GraphActivity extends Activity {
 	protected Dialog onCreateDialog(int id) {
 		Dialog ret;
 		if (id == DIALOG_CHANGELOG) {
-			String [] splitLog = logMessages[messageIndex].split("\n");
-			Log.d(getClass().getName(), "Got lines " + splitLog.length);
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage("Change log:\n" + logMessages[messageIndex])
+			builder.setMessage("Change log at " + logMessages[messageIndex])
 			       .setCancelable(true);
 			ret = builder.create();
 		} else {
@@ -145,15 +162,14 @@ public class GraphActivity extends Activity {
 			long timeStamp = Long.parseLong((String)d.get(DatabaseManager.ID_COLUMN));
 			int usage = Integer.parseInt((String)d.get(DatabaseManager.DELTA_COLUMN));
 			String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
-			logMessages[i] = changeLog;
+			logMessages[i] = DateFormat.getDateTimeInstance().format(timeStamp)
+					+ ":\n" + changeLog;
 			
 			if (i == 0) startTime = timeStamp;
 			else if (i == (dbData.size() - 1)) endTime = timeStamp;
 			
 			graphData[i++] = new GraphViewData(timeStamp, usage);
 			if (usage > maxUsage) maxUsage = usage;
-			
-			Log.d(getClass().getName(), "Added to graph : " + timeStamp + " - " + changeLog);
 		}
 		
 		retSeries = new GraphViewSeries(graphData);
@@ -161,7 +177,8 @@ public class GraphActivity extends Activity {
 		maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
 
 		int usageRatioInt = (int)((maxUsage / maxStorage) * 100);
-		usageRatio = Integer.toString(usageRatioInt) + "% max used, total size "
+		usageRatio = convertToStorageUnits(maxUsage) + " max used (" 
+				+ Integer.toString(usageRatioInt) + "%) out of total size "
 				+ convertToStorageUnits(maxStorage);
 		if ((maxUsage / maxStorage) < 0.7) {
 			maxStorage = maxUsage;
