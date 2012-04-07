@@ -57,7 +57,7 @@ public class GraphActivity extends Activity {
 			alertBuild.setMessage("Database is empty! There seems to be no activity observed.")
 				.setCancelable(false)
 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					@Override
+					//@Override
 					public void onClick(DialogInterface dialog, int which) {
 						GraphActivity.this.finish();
 					}
@@ -102,25 +102,6 @@ public class GraphActivity extends Activity {
 			}
 		});
 
-//		if (lowerThanMax) {
-//			locColor = Color.rgb(100, 100, 0); // Current usage is lower than 70%
-//		} else {
-//			locColor = Color.rgb(200, 0, 0);
-//		}
-		// Add marker for maximum storage
-//		GraphViewSeries maxStorageMark = new GraphViewSeries("Maximum storage", locColor,
-//				new GraphViewData[] {
-//					new GraphViewData(startTime, maxStorage),
-//					new GraphViewData(endTime, maxStorage)
-//		});
-		
-		// Add marker for 0
-//		GraphViewSeries minStorageMark = new GraphViewSeries("Maximum storage", Color.rgb(0, 0, 0),
-//				new GraphViewData[] {
-//					new GraphViewData(startTime, 0),
-//					new GraphViewData(endTime, 0)
-//		});
-
 		storageGraph.setManualYAxis(true);
 		storageGraph.setManualYAxisBounds(maxStorage, 0);
 		storageGraph.setScalable(true);
@@ -142,6 +123,13 @@ public class GraphActivity extends Activity {
 		}
 		
 		return ret;
+	}
+	
+	// Update message everytime
+	protected void onPrepareDialog(int id, Dialog dia) {
+		if (id == DIALOG_CHANGELOG) {
+			((AlertDialog)dia).setMessage("Change log at " + logMessages[messageIndex]);
+		}
 	}
 	
 	// Helpers
@@ -176,10 +164,9 @@ public class GraphActivity extends Activity {
 		trackingDB.close();
 		maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
 
-		int usageRatioInt = (int)((maxUsage / maxStorage) * 100);
+		String usageRatioInt = new DecimalFormat("#.#").format((maxUsage * 100f) / maxStorage);
 		usageRatio = convertToStorageUnits(maxUsage) + " max used (" 
-				+ Integer.toString(usageRatioInt) + "%) out of total size "
-				+ convertToStorageUnits(maxStorage);
+				+ usageRatioInt + "%) out of total size " + convertToStorageUnits(maxStorage);
 		if ((maxUsage / maxStorage) < 0.7) {
 			maxStorage = maxUsage;
 			lowerThanMax = true;

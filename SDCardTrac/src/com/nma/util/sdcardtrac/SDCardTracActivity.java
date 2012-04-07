@@ -59,12 +59,12 @@ public class SDCardTracActivity extends Activity
 	
 	// Connection to service
 	private ServiceConnection serviceConn = new ServiceConnection() {
-		@Override
+		//@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			serviceBind = (FileObserverService.TrackingBinder)service;
 			boundToService = true;
 		}
-		@Override
+		//@Override
 		public void onServiceDisconnected(ComponentName className) {
 			boundToService = false;
 		}
@@ -137,7 +137,7 @@ public class SDCardTracActivity extends Activity
     }
     
     // UI interaction, button click handler
-    @Override
+    //@Override
     public void onClick(View v) {
     	int currId = v.getId();
     	String startOffsetStr, triggerIntervalStr;
@@ -192,7 +192,7 @@ public class SDCardTracActivity extends Activity
     }
     
     // Selector
-	@Override
+	//@Override
 	public void onItemSelected(AdapterView<?> parent, View v, int pos,
 			long id) {
 		storeIntervalIndex = pos;
@@ -204,7 +204,7 @@ public class SDCardTracActivity extends Activity
 		}
 	}
 
-	@Override
+	//@Override
 	public void onNothingSelected(AdapterView<?> arg0) {
 		// TODO Auto-generated method stub
 		
