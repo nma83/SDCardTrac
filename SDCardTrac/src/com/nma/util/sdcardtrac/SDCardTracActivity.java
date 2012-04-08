@@ -92,7 +92,7 @@ public class SDCardTracActivity extends Activity
         restoreConfig();
 
     	// Start monitoring service
-        if (alarmSetupDone) {
+        if (!alarmSetupDone) {
         	backgroundService(true);
         	manageAlarm(true);
         }
