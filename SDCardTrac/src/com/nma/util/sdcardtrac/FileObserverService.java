@@ -7,7 +7,9 @@ package com.nma.util.sdcardtrac;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.app.Service;
 import android.content.Intent;
@@ -38,7 +40,7 @@ public class FileObserverService extends Service {
         }
     }
 
-    private List <ObservedEvent> eventsList; // Periodically re-created list of events
+    private ConcurrentLinkedQueue <ObservedEvent> eventsList; // Periodically re-created list of events
 
     // Binder to talk to periodic tracking activity
     public class TrackingBinder extends Binder {
@@ -56,7 +58,7 @@ public class FileObserverService extends Service {
         // First call to above parser from interface
     	numObs = 0;
     	fobsList = new ArrayList <UsageFileObserver> ();
-    	eventsList = new ArrayList <ObservedEvent> ();
+    	eventsList = new ConcurrentLinkedQueue<FileObserverService.ObservedEvent>();
         parseDirAndHook(Environment.getExternalStorageDirectory(), true);
 
         // Create database handle
@@ -111,7 +113,7 @@ public class FileObserverService extends Service {
         		UsageFileObserver currObs = new UsageFileObserver(fromDir.getPath(), FOBS_EVENTS_TO_LISTEN, this);
         		fobsList.add(currObs); // ID of this observer is the list index
         		numObs++;
-        		Log.d(this.getClass().getName(), "Hooking to " + fromDir.getPath());
+//        		Log.d(this.getClass().getName(), "Hooking to " + fromDir.getPath());
         	}
         } catch (NullPointerException e) {
         	locError = true;
@@ -142,9 +144,14 @@ public class FileObserverService extends Service {
     // Callback for event recording
     public void queueEvent(String filePath, int eventMask, UsageFileObserver fileObs) {
         ObservedEvent currEvent = new ObservedEvent();
+        
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
         currEvent.duplicate = false; // Will be updated while reporting
-        eventsList.add(currEvent);
+        
+//        synchronized (syncEventsList) {
+        eventsList.add(currEvent);	
+//		}
+        
         // Look at any FileObserver manipulations needed due to file/directory updates
         // Hook up observer if a new directory is created
         if ((eventMask & FileObserver.CREATE) != 0 || 
@@ -161,50 +168,57 @@ public class FileObserverService extends Service {
     public void storeAllEvents () {
     	String [] changeLog;
     	int numLogs = 0;
+    	// Use synchronized version since queueEvent may be modifying the eventsList
+//    	List <ObservedEvent> syncEventsList = Collections.synchronizedList(eventsList);
+    	ArrayList <ObservedEvent> uniqEvents = new ArrayList <ObservedEvent> ();
     	
+//    	synchronized (syncEventsList) {
     	// Return if no events
-    	if (eventsList.size() == 0) {
+    	if (eventsList.isEmpty()) {
     		Log.w(this.getClass().getName(), "No events yet!");
     		return;
     	}
-    	
-    	// Get the space data
-    	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
-    	long freeSpace = Environment.getExternalStorageDirectory().getFreeSpace();
-    	long usedSpace = (totalSpace - freeSpace);
-    	
+
     	// Compact the change log, remove duplicate entries
     	// TODO: O(n^2) operation here, try to optimise, profile too
     	for (ObservedEvent i : eventsList) {
     		if (!i.duplicate) {
     			for (ObservedEvent j : eventsList) {
-//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
+    				//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
     				if (i.compareWith(j) && (i != j))
     					j.duplicate = true;
     			}
+
+    			uniqEvents.add(i);
     			numLogs++;
     		}
-    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
+    		//    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
     	}
+
+    	eventsList.clear();
+//    	}
+    	
+    	// Get the space data
+    	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
+    	long freeSpace = Environment.getExternalStorageDirectory().getFreeSpace();
+    	long usedSpace = (totalSpace - freeSpace);
 
         // Store in database
         trackingDB.openToWrite();
         changeLog = new String[numLogs];
         numLogs = 0;
-        for (ObservedEvent i : eventsList) {
-        	if (!i.duplicate) {
-        		String changeTag = i.filePath;
-        		if ((i.eventMask & FileObserver.MODIFY) != 0)
-        			changeTag += " was modified";
-        		if ((i.eventMask & FileObserver.CREATE) != 0)
-        			changeTag += " was created";
-        		if ((i.eventMask & FileObserver.DELETE) != 0)
-        			changeTag += " was deleted";
-        		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
-        			changeTag += " was moved";
-        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
-        		changeLog[numLogs++] = changeTag;
-        	}
+        for (ObservedEvent i : uniqEvents) {
+        	String changeTag = i.filePath;
+        	if ((i.eventMask & FileObserver.MODIFY) != 0)
+        		changeTag += " was modified";
+        	if ((i.eventMask & FileObserver.CREATE) != 0)
+        		changeTag += " was created";
+        	if ((i.eventMask & FileObserver.DELETE) != 0)
+        		changeTag += " was deleted";
+        	if ((i.eventMask & FileObserver.MOVED_TO) != 0)
+        		changeTag += " was moved";
+        	//        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
+        	changeLog[numLogs++] = changeTag;
         }
         
         StringBuilder sb = new StringBuilder();
@@ -214,10 +228,8 @@ public class FileObserverService extends Service {
             sb.append("\n");
         }
         
-        Log.d(this.getClass().getName(), "Inserting row - " + sb.toString());
+//        Log.d(this.getClass().getName(), "Inserting row - " + sb.toString());
         trackingDB.insert(System.currentTimeMillis(), (int)usedSpace, sb.toString());
         trackingDB.close();
-        
-        eventsList.clear();
     }
 }
