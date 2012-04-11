@@ -10,6 +10,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.jjoe64.graphview.BarGraphView;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphView.GraphViewSeries;
@@ -21,10 +22,12 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.LinearLayout;
 
 public class GraphActivity extends Activity {
@@ -37,6 +40,7 @@ public class GraphActivity extends Activity {
 	String [] logMessages;
 	int messageIndex;
 	private static final int DIALOG_CHANGELOG = 1;
+	private GraphView storageGraph;
 	
 	@Override
 	public void onCreate(Bundle savedInstance) {
@@ -69,7 +73,7 @@ public class GraphActivity extends Activity {
 		
 		// Plot it
 		prevDate = "";
-		GraphView storageGraph = new LineGraphView(this, "Storage History, " + usageRatio) {
+		storageGraph = new LineGraphView(this, "Storage History, " + usageRatio) {
 			@Override  
 			protected String formatLabel(double value, boolean isValueX) {
 				String retValue;
@@ -93,7 +97,7 @@ public class GraphActivity extends Activity {
 			}
 		};
 		// Add selector callback
-		storageGraph.setSelectHandler(new GraphView.OnSelectHandler() {
+		storageGraph.setSelectHandler(storageGraph.new OnSelectHandler() {
 			@Override
 			protected void onSelect(int index) {
 				Log.d(getClass().getName(), "In select handler!! @ " + index);
@@ -106,6 +110,7 @@ public class GraphActivity extends Activity {
 		storageGraph.setManualYAxisBounds(maxStorage, 0);
 		storageGraph.setScalable(true);
 		storageGraph.setMultiLineXLabel(true, ";");
+		((LineGraphView)storageGraph).setDrawBackground(true);
 		storageGraph.addSeries(storageGraphData);
 		((LinearLayout)findViewById(R.id.graph_layout)).addView(storageGraph);
 	}
@@ -198,5 +203,55 @@ public class GraphActivity extends Activity {
 		
 		retValue = new DecimalFormat("#.#").format((value / scaling)) + suffix;
 		return retValue;
+	}
+	
+	// Refresh the graph with latest data
+	private void refreshGraph() {
+		// Get data from DB
+		// Show indefinite progress
+		ProgressDialog prog = ProgressDialog.show(this, "Storage history", "Fetching data...", true);
+		trackingDB = new DatabaseManager(this);
+		GraphViewSeries storageGraphData = getData();
+		prog.dismiss();
+		
+		// Sanity check the data
+		if ((storageGraphData == null) || (logMessages.length < 1)) {
+			AlertDialog.Builder alertBuild = new AlertDialog.Builder(this);
+			alertBuild.setMessage("Database is empty! There seems to be no activity observed.")
+				.setCancelable(false)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					//@Override
+					public void onClick(DialogInterface dialog, int which) {
+						GraphActivity.this.finish();
+					}
+				});
+			AlertDialog alert = alertBuild.create();
+			alert.show();
+			return;
+		}
+		
+		storageGraph.removeSeries(0);
+		storageGraph.addSeries(storageGraphData);
+		storageGraph.invalidate();
+	}
+	
+	// Menu creating and handling
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.graph_menu, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle item selection
+	    switch (item.getItemId()) {
+	        case R.id.graph_refresh:
+	            refreshGraph();
+	            return true;
+	    }
+	    
+	    return false;
 	}
 }
