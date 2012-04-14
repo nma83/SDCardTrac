@@ -10,7 +10,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.jjoe64.graphview.BarGraphView;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphView.GraphViewSeries;
@@ -81,7 +80,7 @@ public class GraphActivity extends Activity {
 				if (isValueX) { // Format time in human readable form
 					Date currDate = new Date((long)value);
 					retValue = DateFormat.getDateInstance().format(currDate);
-					if (retValue.equals(prevDate)) {
+					if (retValue.equals(prevDate) && !prevDate.equals("")) {
 						prevDate = retValue;
 						retValue = DateFormat.getTimeInstance().format(currDate);
 					} else {
@@ -91,6 +90,7 @@ public class GraphActivity extends Activity {
 //					Log.d(getClass().getName(), "Date is : " + retValue);
 				} else { // Format size in human readable form
 					retValue = convertToStorageUnits(value);
+					prevDate = "";
 				}
 				//return super.formatLabel(value, isValueX); // let the y-value be normal-formatted
 				return retValue;
@@ -99,7 +99,7 @@ public class GraphActivity extends Activity {
 		// Add selector callback
 		storageGraph.setSelectHandler(storageGraph.new OnSelectHandler() {
 			@Override
-			protected void onSelect(int index) {
+			public void onSelect(int index) {
 				Log.d(getClass().getName(), "In select handler!! @ " + index);
 				messageIndex = index;
 				showDialog(DIALOG_CHANGELOG);
@@ -111,7 +111,9 @@ public class GraphActivity extends Activity {
 		storageGraph.setScalable(true);
 		storageGraph.setMultiLineXLabel(true, ";");
 		((LineGraphView)storageGraph).setDrawBackground(true);
+		((LineGraphView)storageGraph).setPointStyle(LineGraphView.LineGraphPointStyle.LINE_POINT_CIRCLE);
 		storageGraph.addSeries(storageGraphData);
+		storageGraph.setViewPort(startTime, (endTime - startTime));
 		((LinearLayout)findViewById(R.id.graph_layout)).addView(storageGraph);
 	}
 	
@@ -173,7 +175,7 @@ public class GraphActivity extends Activity {
 		usageRatio = convertToStorageUnits(maxUsage) + " max used (" 
 				+ usageRatioInt + "%) out of total size " + convertToStorageUnits(maxStorage);
 		if ((maxUsage / maxStorage) < 0.7) {
-			maxStorage = maxUsage;
+			maxStorage = (long) (maxUsage * 1.1);
 			lowerThanMax = true;
 		} else {
 			lowerThanMax = false;
@@ -232,6 +234,7 @@ public class GraphActivity extends Activity {
 		
 		storageGraph.removeSeries(0);
 		storageGraph.addSeries(storageGraphData);
+		storageGraph.setManualYAxisBounds(maxStorage, 0);
 		storageGraph.invalidate();
 	}
 	
