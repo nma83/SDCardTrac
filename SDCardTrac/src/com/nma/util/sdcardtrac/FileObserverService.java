@@ -7,7 +7,6 @@ package com.nma.util.sdcardtrac;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -66,13 +65,14 @@ public class FileObserverService extends Service {
         Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
     }
     
-    // Below is called on 2 occasions
+    // Below is called on: 
     // 1. From activity starting up the whole thing
     // 2. From an alarm indicating to collect events
+    // 3. Media remounted, to record delta size
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
     	// Decode the intent
-    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
+//    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
     	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) { // Restart by OS or activity
     		for (UsageFileObserver i : fobsList) {
     			i.startWatching();
@@ -81,7 +81,9 @@ public class FileObserverService extends Service {
     	} else if (intent != null) { // Other actions
     		if (intent.getAction().equals(Intent.ACTION_VIEW)) { // Collect data
     			Log.d(this.getClass().getName(), "Clearing " + eventsList.size() + " events");
-    			storeAllEvents();
+    			storeAllEvents(false);
+    		} else if (intent.getAction().equals(Intent.ACTION_SYNC)) {
+    			storeAllEvents(true);
     		} else if (intent.getAction().equals(Intent.ACTION_DELETE)) {
     			stopWatching();
     		}
@@ -165,38 +167,39 @@ public class FileObserverService extends Service {
     }
 
     // Consumer of eventsList
-    public void storeAllEvents () {
+    public void storeAllEvents (boolean ignoreEvents) {
     	String [] changeLog;
     	int numLogs = 0;
     	// Use synchronized version since queueEvent may be modifying the eventsList
-//    	List <ObservedEvent> syncEventsList = Collections.synchronizedList(eventsList);
     	ArrayList <ObservedEvent> uniqEvents = new ArrayList <ObservedEvent> ();
     	
-//    	synchronized (syncEventsList) {
-    	// Return if no events
-    	if (eventsList.isEmpty()) {
-    		Log.w(this.getClass().getName(), "No events yet!");
-    		return;
-    	}
-
-    	// Compact the change log, remove duplicate entries
-    	// TODO: O(n^2) operation here, try to optimise, profile too
-    	for (ObservedEvent i : eventsList) {
-    		if (!i.duplicate) {
-    			for (ObservedEvent j : eventsList) {
-    				//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
-    				if (i.compareWith(j) && (i != j))
-    					j.duplicate = true;
-    			}
-
-    			uniqEvents.add(i);
-    			numLogs++;
+    	if (ignoreEvents) {
+    		numLogs = 1;
+    	} else {
+    		// Return if no events
+    		if (eventsList.isEmpty()) {
+    			Log.w(this.getClass().getName(), "No events yet!");
+    			return;
     		}
-    		//    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
-    	}
 
-    	eventsList.clear();
-//    	}
+    		// Compact the change log, remove duplicate entries
+    		// TODO: O(n^2) operation here, try to optimise, profile too
+    		for (ObservedEvent i : eventsList) {
+    			if (!i.duplicate) {
+    				for (ObservedEvent j : eventsList) {
+    					//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
+    					if (i.compareWith(j) && (i != j))
+    						j.duplicate = true;
+    				}
+
+    				uniqEvents.add(i);
+    				numLogs++;
+    			}
+    			//    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
+    		}
+
+    		eventsList.clear();
+    	}
     	
     	// Get the space data
     	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
@@ -207,18 +210,22 @@ public class FileObserverService extends Service {
         trackingDB.openToWrite();
         changeLog = new String[numLogs];
         numLogs = 0;
-        for (ObservedEvent i : uniqEvents) {
-        	String changeTag = i.filePath;
-        	if ((i.eventMask & FileObserver.MODIFY) != 0)
-        		changeTag += " was modified";
-        	if ((i.eventMask & FileObserver.CREATE) != 0)
-        		changeTag += " was created";
-        	if ((i.eventMask & FileObserver.DELETE) != 0)
-        		changeTag += " was deleted";
-        	if ((i.eventMask & FileObserver.MOVED_TO) != 0)
-        		changeTag += " was moved";
-        	//        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
-        	changeLog[numLogs++] = changeTag;
+        if (ignoreEvents) {
+        	changeLog[0] = "- MEDIA REMOUNT -";
+        } else {
+        	for (ObservedEvent i : uniqEvents) {
+        		String changeTag = i.filePath;
+        		if ((i.eventMask & FileObserver.MODIFY) != 0)
+        			changeTag += " was modified";
+        		if ((i.eventMask & FileObserver.CREATE) != 0)
+        			changeTag += " was created";
+        		if ((i.eventMask & FileObserver.DELETE) != 0)
+        			changeTag += " was deleted";
+        		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
+        			changeTag += " was moved";
+        		//        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
+        		changeLog[numLogs++] = changeTag;
+        	}
         }
         
         StringBuilder sb = new StringBuilder();

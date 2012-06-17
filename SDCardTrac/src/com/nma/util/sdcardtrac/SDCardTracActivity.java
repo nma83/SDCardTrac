@@ -18,17 +18,18 @@
 
 package com.nma.util.sdcardtrac;
 
-import java.util.Calendar;
 
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.PendingIntent;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
@@ -43,8 +44,8 @@ import android.widget.ToggleButton;
 
 public class SDCardTracActivity extends Activity 
 	implements OnClickListener, OnItemSelectedListener {
-	private static final int DEFAULT_START_OFFSET_SEC = 10;
-	private static final long DEFAULT_UPDATE_INTERVAL_SEC = AlarmManager.INTERVAL_HALF_DAY;
+	public static final int DEFAULT_START_OFFSET_SEC = 10;
+	public static final long DEFAULT_UPDATE_INTERVAL_SEC = AlarmManager.INTERVAL_HALF_DAY;
 	
 	// Handle to running service
 	private FileObserverService.TrackingBinder serviceBind;
@@ -54,8 +55,8 @@ public class SDCardTracActivity extends Activity
 	private int storeStartOffset = DEFAULT_START_OFFSET_SEC;
 	private long storeTriggerInterval = DEFAULT_UPDATE_INTERVAL_SEC;
 	private int storeIntervalIndex = 0;
-	// Alarms
-	PendingIntent alarmIntent;
+	// Alarm
+	AlarmHelper alarmHelp;
 	
 	// Connection to service
 	private ServiceConnection serviceConn = new ServiceConnection() {
@@ -84,17 +85,29 @@ public class SDCardTracActivity extends Activity
         ((Button)findViewById(R.id.show_graph_button)).setOnClickListener(this);
         ((Button)findViewById(R.id.exit_app_button)).setOnClickListener(this);
 
-        // Setup alarm intent - one time
-        Intent triggerIntent = new Intent(this, DeltaCompute.class);
-        alarmIntent = PendingIntent.getBroadcast(this, 0, triggerIntent, 0);
-
         // Bringup stored state, assigns to store*
         restoreConfig();
+        alarmHelp = new AlarmHelper(this);
 
     	// Start monitoring service
-        if (!alarmSetupDone) {
-        	backgroundService(true);
-        	manageAlarm(true);
+        if (alarmSetupDone) {
+        	if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+        		backgroundService(true);
+        		alarmSetupDone = alarmHelp.manageAlarm(true, alarmSetupDone, storeStartOffset, storeTriggerInterval);
+        	} else {
+        		Log.e(getClass().getName(), "External media not mounted!");
+    			AlertDialog.Builder alertBuild = new AlertDialog.Builder(this);
+    			alertBuild.setMessage("The external storage location is not available yet. Please try again after mounting it.")
+    				.setCancelable(false)
+    				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    					//@Override
+    					public void onClick(DialogInterface dialog, int which) {
+    						return;
+    					}
+    				});
+    			AlertDialog alert = alertBuild.create();
+    			alert.show();
+        	}
         }
         
         // Set default state of UI
@@ -130,6 +143,7 @@ public class SDCardTracActivity extends Activity
     @Override
     protected void onStop() {
     	super.onStop();
+    	updateConfig();
     	if (boundToService) {
     		unbindService(serviceConn);
     		boundToService = false;
@@ -142,6 +156,7 @@ public class SDCardTracActivity extends Activity
     	int currId = v.getId();
     	String startOffsetStr, triggerIntervalStr;
     	boolean checked;
+    	ProgressDialog prog;
     	
     	switch (currId) {
     	case R.id.apply_config_button:
@@ -171,14 +186,38 @@ public class SDCardTracActivity extends Activity
     		break;
     	case R.id.background_control_toggle:
     		checked = ((ToggleButton)findViewById(R.id.background_control_toggle)).isChecked();
-    		backgroundService(checked);
-    		manageAlarm(checked);
+    		if (checked && !(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))) {
+    			AlertDialog.Builder alertBuild = new AlertDialog.Builder(this);
+    			alertBuild.setMessage("The external storage location is not available yet. Please try again after mounting it.")
+    				.setCancelable(false)
+    				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    					//@Override
+    					public void onClick(DialogInterface dialog, int which) {
+    						return;
+    					}
+    				});
+    			AlertDialog alert = alertBuild.create();
+    			alert.show();
+    			((ToggleButton)findViewById(R.id.background_control_toggle)).setChecked(false);
+    		} else {
+        		String disp;
+        		if (checked) disp = "Enabling";
+        		else disp = "Disabling";
+        		
+    			prog = ProgressDialog.show(this, "Background service", disp + " background service...", true);
+    			backgroundService(checked);
+    			alarmSetupDone = alarmHelp.manageAlarm(checked, alarmSetupDone, storeStartOffset, storeTriggerInterval);
+    			prog.dismiss();
+    		}
     		// Disable trigger button if background disabled
     		((Button)findViewById(R.id.trigger_collect_button)).setEnabled(checked);
+    		alarmSetupDone = checked;
     		break;
     	case R.id.trigger_collect_button:
     		Intent triggerCollect = new Intent(this, FileObserverService.class);
+    		prog = ProgressDialog.show(this, "Data collection", "Collecting data...", true);
     		triggerCollect.setAction(Intent.ACTION_VIEW);
+    		prog.dismiss();
     		startService(triggerCollect);
     		break;
     	case R.id.show_graph_button:
@@ -217,7 +256,7 @@ public class SDCardTracActivity extends Activity
         // Get configuration
         storeStartOffset = prefs.getInt("AlarmStartOffset", DEFAULT_START_OFFSET_SEC);
         storeTriggerInterval = prefs.getLong("AlarmTriggerInterval", DEFAULT_UPDATE_INTERVAL_SEC);
-        alarmSetupDone = prefs.getBoolean("AlarmEnabled", true);
+        alarmSetupDone = prefs.getBoolean("AlarmEnabled", false);
         storeIntervalIndex = prefs.getInt("AlarmIntervalSelect", 3); // Index of half day
     	Log.d(getClass().getName(), "Restored: " + storeStartOffset + ", " + storeTriggerInterval + ", "
     			+ alarmSetupDone + ", " + storeIntervalIndex);
@@ -254,34 +293,5 @@ public class SDCardTracActivity extends Activity
     		startService(serviceIntent);
     		// TODO: stopService(serviceIntent);
     	}
-    }
-    
-    // Setup recurring collection of events
-    private void manageAlarm(boolean enable) {
-    	if (enable) {
-    		if (alarmSetupDone) {
-    			((AlarmManager)getSystemService(Context.ALARM_SERVICE)).cancel(alarmIntent);
-    			alarmSetupDone = false;
-    		}
-            // Setup the alarm
-            setupEventCollection(storeStartOffset, storeTriggerInterval * 1000);
-    	} else if (alarmSetupDone) {
-			((AlarmManager)getSystemService(Context.ALARM_SERVICE)).cancel(alarmIntent);
-			Log.d(getClass().getName(), "Cancelling alarms");
-			alarmSetupDone = false;
-    	}
-    }
-    
-    // Alarm setup
-    public void setupEventCollection(int startOffset, long triggerInterval) {
-    	Log.d(this.getClass().getName(), "Setting up alarm for collection");
-    	AlarmManager alarmEr = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-    	Calendar time = Calendar.getInstance();
-    	time.setTimeInMillis(System.currentTimeMillis());
-    	time.add(Calendar.SECOND, startOffset);
-    	alarmEr.setInexactRepeating(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), 
-    			triggerInterval, alarmIntent); //AlarmManager.INTERVAL_FIFTEEN_MINUTES
-    	Log.d(this.getClass().getName(), "Done with alarm setup");
-    	alarmSetupDone = true;
     }
 }
