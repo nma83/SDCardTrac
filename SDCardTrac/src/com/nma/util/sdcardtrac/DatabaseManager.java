@@ -55,7 +55,8 @@ class DatabaseManager {
 		sqLiteHelper.close();
 	}
 
-	public long insert(long timeStamp, int deltaSize, String changeLog){
+    // TODO Use table name
+	public long insert(String toTable, long timeStamp, int deltaSize, String changeLog){
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(ID_COLUMN, timeStamp);
 		contentValues.put(DELTA_COLUMN, deltaSize);
@@ -68,7 +69,7 @@ class DatabaseManager {
 	}
 
 	// Retrieve database content between startTime and endTime (0 means don't care)
-	public List<ContentValues> getValues(long startTime, long endTime){
+	public List<ContentValues> getValues(String fromTable, long startTime, long endTime){
 		String selectCrit;
 		ArrayList <ContentValues> retList = new ArrayList<ContentValues>();
 		

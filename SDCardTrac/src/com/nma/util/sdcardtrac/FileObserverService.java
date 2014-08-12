@@ -53,16 +53,19 @@ public class FileObserverService extends Service {
 
     @Override
     public void onCreate() {
+        File baseDir = Environment.getExternalStorageDirectory();
+        String basePath = baseDir.getAbsolutePath();
     	Log.d(this.getClass().getName(), "Creating the service");
         // First call to above parser from interface
     	numObs = 0;
     	fobsList = new ArrayList <UsageFileObserver> ();
     	eventsList = new ConcurrentLinkedQueue<FileObserverService.ObservedEvent>();
-        parseDirAndHook(Environment.getExternalStorageDirectory(), true);
+        parseDirAndHook(baseDir, true);
 
         // Create database handle
         trackingDB = new DatabaseManager(this);
-        Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)");
+        Log.d(this.getClass().getName(), "Done hooking all observers (" + numObs + " of them)"
+        + " starting at " + basePath);
     }
     
     // Below is called on: 
@@ -73,7 +76,8 @@ public class FileObserverService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
     	// Decode the intent
 //    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
-    	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) { // Restart by OS or activity
+    	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) {
+    	    // Restart by OS or activity
     		for (UsageFileObserver i : fobsList) {
     			i.startWatching();
     		}
@@ -121,12 +125,11 @@ public class FileObserverService extends Service {
         	locError = true;
         	Log.e(this.getClass().getName(), "Error hooking to " + fromDir.getPath() + "=" + e.toString());
         }
-        
+        //Log.d(this.getClass().getName(), "Descending into " + fromDir.getPath() + " files " + fromDir.listFiles());
         if (!locError && (fromDir != null) && (fromDir.listFiles() != null)) {
         	for (File i : fromDir.listFiles()) {
         		if (i.isDirectory()) {
         			// Recursive call
-        			//Log.d(this.getClass().getName(), "Getting into " + i.getPath());
         			locError = parseDirAndHook(i, hookObs);
         		}
         	}
@@ -236,7 +239,8 @@ public class FileObserverService extends Service {
         }
         
 //        Log.d(this.getClass().getName(), "Inserting row - " + sb.toString());
-        trackingDB.insert(System.currentTimeMillis(), (int)usedSpace, sb.toString());
+        trackingDB.insert(GraphActivity.TAB_NAME_EXT_STORAGE, System.currentTimeMillis(),
+                (int)usedSpace, sb.toString());
         trackingDB.close();
     }
 }

@@ -36,7 +36,7 @@ public class AlarmHelper {
     			((AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE)).cancel(alarmIntent);
     		}
             // Setup the alarm
-            setupAlarm(startOffset, triggerInterval * 1000);
+            setupAlarm(startOffset, triggerInterval);
 			alarmSetupDone = true;
     	} else if (alarmSetupWasDone) {
 			((AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE)).cancel(alarmIntent);

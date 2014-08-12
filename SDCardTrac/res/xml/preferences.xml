@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<CheckBoxPreference
+    android:key = "enable_tracker"
+    android:title = "@string/enable_tracker"
+    android:summary= "@string/enable_tracker_summ"
+    android:defaultValue="true"
+    />
+<ListPreference
+    android:dependency="enable_tracker"
+    android:key = "tracker_update_interval"
+    android:title = "@string/tracker_update_interval"
+    android:dialogTitle = "@string/tracker_update_interval"
+    android:entries = "@array/update_intervals_phase"
+    android:entryValues = "@array/update_intervals_phase_val"
+    android:defaultValue= "0"
+    />
+<Preference
+    android:key = "tracker_delete_data"
+    android:title = "@string/tracker_delete_data"
+    />
+</PreferenceScreen>
