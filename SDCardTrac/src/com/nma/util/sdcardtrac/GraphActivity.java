@@ -106,19 +106,24 @@ public class GraphActivity extends ActionBarActivity
     }
 
     // Goto settings menu
-    private void showSettings() {
+    public void showSettings() {
         Intent show = new Intent(this, SettingsActivity.class);
         startActivity(show);
     }
 
     @Override
     public void onFragmentInteraction(String reason) {
-        // Update the latest fragment
-        GraphFragment frag = (GraphFragment)getSupportFragmentManager().findFragmentByTag(reason);
-        Log.d("onFragmentInteraction", "Got ID " + reason + "=" + frag);
-        if (frag != null)
-            getSupportFragmentManager().beginTransaction()
-                    .detach(frag).attach(frag)
-                    .commit();
+        if (reason != null &&
+            reason.equals(getString(R.string.act_goto_settings))) {
+            showSettings();
+        } else {
+            // Update the latest fragment
+            GraphFragment frag = (GraphFragment) getSupportFragmentManager().findFragmentByTag(reason);
+            Log.d("onFragmentInteraction", "Got ID " + reason + "=" + frag);
+            if (frag != null)
+                getSupportFragmentManager().beginTransaction()
+                        .detach(frag).attach(frag)
+                        .commit();
+        }
     }
 }

@@ -15,4 +15,9 @@
 
     <string name="changelog_dialog_title">Files changed</string>
     <string name="changelog_dialog_button">Done</string>
+
+    <string name="act_goto_settings">SETTINGS</string>
+    <string name="db_empty_error">
+        No data found. Please check if tracking is enabled in settings or check again later.
+    </string>
 </resources>

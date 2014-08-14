@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
@@ -59,6 +60,7 @@ public class GraphFragment extends Fragment
 
     private static final float GRAPHVIEW_TEXT_SIZE_DIP = 12.0f;
     private static final float GRAPHVIEW_POINT_SIZE_DIP = 5.0f;
+    private static boolean firstView = true;
 
     /**
      * Use this factory method to create a new instance of
@@ -146,9 +148,19 @@ public class GraphFragment extends Fragment
         Log.d("FragLoader", "Done loading with " + data.size() + " items");
         locData = data;
 
-        createGraphData();
+        if (locData.size() == 0) {
+            // Flag an error
+            Toast.makeText(getActivity(), R.string.db_empty_error, Toast.LENGTH_LONG).show();
+            // Goto settings
+            if (firstView && mListener != null) {
+                firstView = false;
+                mListener.onFragmentInteraction(getResources().getString(R.string.act_goto_settings));
+            }
+        } else {
+            createGraphData();
 
-        drawGraph();
+            drawGraph();
+        }
     }
 
     @Override
