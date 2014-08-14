@@ -27,6 +27,7 @@ public class FileObserverService extends Service {
 
     private int numObs;
     private DatabaseManager trackingDB;
+    private String basePath;
     
     // Data-structure of a file event
     public class ObservedEvent {
@@ -54,7 +55,7 @@ public class FileObserverService extends Service {
     @Override
     public void onCreate() {
         File baseDir = Environment.getExternalStorageDirectory();
-        String basePath = baseDir.getAbsolutePath();
+        basePath = baseDir.getAbsolutePath();
     	Log.d(this.getClass().getName(), "Creating the service");
         // First call to above parser from interface
     	numObs = 0;
@@ -78,6 +79,10 @@ public class FileObserverService extends Service {
 //    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
     	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) {
     	    // Restart by OS or activity
+    	    // Create a dummy entry
+    	    queueEvent(basePath, FileObserver.ATTRIB, null);
+    	    storeAllEvents(true);
+    	    
     		for (UsageFileObserver i : fobsList) {
     			i.startWatching();
     		}
@@ -214,19 +219,30 @@ public class FileObserverService extends Service {
         changeLog = new String[numLogs];
         numLogs = 0;
         if (ignoreEvents) {
-        	changeLog[0] = "- MEDIA REMOUNT -";
+        	changeLog[0] = "- External event -";
         } else {
         	for (ObservedEvent i : uniqEvents) {
-        		String changeTag = i.filePath;
-        		if ((i.eventMask & FileObserver.MODIFY) != 0)
-        			changeTag += " was modified";
+        		String changeTag = null;
+        		
         		if ((i.eventMask & FileObserver.CREATE) != 0)
-        			changeTag += " was created";
+        			changeTag += "Created,";
         		if ((i.eventMask & FileObserver.DELETE) != 0)
-        			changeTag += " was deleted";
+        			changeTag += "Deleted,";
         		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
-        			changeTag += " was moved";
-        		//        		Log.d(getClass().getName(), "Adding line - " + changeTag + "@" + numLogs);
+        			changeTag += "Moved,";
+        		if (changeTag == null) {
+        		    if (i.eventMask != 0)
+        		//(i.eventMask & FileObserver.MODIFY) != 0)
+        			    changeTag = "Modified,";
+        			else
+        			    changeTag = "No event";
+        		}
+
+        	    if (changeTag.endsWith(",")) {
+        		    changeTag = changeTag.substring(0, changeTag.length());
+        	    }
+        	    changeTag += ": " + i.filePath;
+        		
         		changeLog[numLogs++] = changeTag;
         	}
         }
