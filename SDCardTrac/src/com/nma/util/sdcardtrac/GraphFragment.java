@@ -53,7 +53,7 @@ public class GraphFragment extends Fragment
     private String logMessages[];
     private GraphView storageGraph;
     private GraphViewSeries graphSeries;
-    private String usageRatio;
+    private String graphLabel;
     private long maxStorage, startTime, endTime;
     private ProgressDialog loadingDBDialog;
 
@@ -189,9 +189,11 @@ public class GraphFragment extends Fragment
         graphSeries = new GraphViewSeries(graphData);
         maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
 
-        String usageRatioInt = new DecimalFormat("#.#").format((maxUsage * 100f) / maxStorage);
-        usageRatio = DatabaseLoader.convertToStorageUnits(maxUsage) + " max used ("
-                + usageRatioInt + "%) of " + DatabaseLoader.convertToStorageUnits(maxStorage);
+        //String usageRatioInt = new DecimalFormat("#.#").format((maxUsage * 100f) / maxStorage);
+        //usageRatio = DatabaseLoader.convertToStorageUnits(maxUsage) + " max used ("
+        //        + usageRatioInt + "%) of " + DatabaseLoader.convertToStorageUnits(maxStorage);
+        graphLabel = Environment.getExternalStorageDirectory().getAbsolutePath() +
+        	" - " + DatabaseLoader.convertToStorageUnits(maxStorage);
 
         if (maxStorage * 0.7 > maxUsage)
             maxStorage = (long)(maxUsage * 1.3);
@@ -205,7 +207,7 @@ public class GraphFragment extends Fragment
         textSize = (GRAPHVIEW_TEXT_SIZE_DIP * dispScale) + 0.5f;
         pointSize = (GRAPHVIEW_POINT_SIZE_DIP * dispScale) + 0.5f;
 
-        storageGraph = new LineGraphView(getActivity(), usageRatio);
+        storageGraph = new LineGraphView(getActivity(), graphLabel);
         storageGraph.setCustomLabelFormatter(new CustomLabelFormatter() {
             String prevDate = "";
 
