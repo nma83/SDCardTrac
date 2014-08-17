@@ -55,12 +55,14 @@ public class GraphFragment extends Fragment
     private GraphView storageGraph;
     private GraphViewSeries graphSeries;
     private String graphLabel;
-    private long maxStorage, startTime, endTime;
+    private long maxStorage, startTime, viewPortWidth;
     private ProgressDialog loadingDBDialog;
 
-    private static final float GRAPHVIEW_TEXT_SIZE_DIP = 12.0f;
-    private static final float GRAPHVIEW_POINT_SIZE_DIP = 5.0f;
+    private static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
+    private static final float GRAPHVIEW_POINT_SIZE_DIP = 4.0f;
     private static boolean firstView = true;
+    private boolean secondSelect = false;
+    private int selectedPoint = 0;
 
     /**
      * Use this factory method to create a new instance of
@@ -185,7 +187,7 @@ public class GraphFragment extends Fragment
 
         for (DatabaseLoader.DatabaseRow row : locData) {
             timeStamp = row.getTime();
-            endTime = timeStamp;
+            //endTime = timeStamp;
             int usage = row.getUsage();
             graphData[i] = new GraphView.GraphViewData(timeStamp, usage);
 
@@ -207,8 +209,11 @@ public class GraphFragment extends Fragment
         graphLabel = Environment.getExternalStorageDirectory().getAbsolutePath() +
         	" - " + DatabaseLoader.convertToStorageUnits(maxStorage);
 
+        // Round up to GB
         if (maxStorage * 0.7 > maxUsage)
-            maxStorage = (long)(maxUsage * 1.3);
+            maxStorage = (long)Math.ceil((double)maxUsage / 1000000000) * 1000000000;
+        else
+            maxStorage = (long)Math.ceil((double)maxStorage / 1000000000) * 1000000000;
     }
 
     private void drawGraph() {
@@ -224,24 +229,30 @@ public class GraphFragment extends Fragment
             String prevDate = "";
 
             @Override
-            public String formatLabel(double value, boolean isValueX) {
+            public String formatLabel(double value, boolean isValueX, int index, int lastIndex) {
                 String retValue;
+                boolean valueXinRange;
 
+                valueXinRange = (index == 0) || (index == lastIndex);
                 if (isValueX) { // Format time in human readable form
-                    String dateStr;
-                    Date currDate = new Date((long)value);
+                    if (valueXinRange) {
+                        String dateStr;
+                        Date currDate = new Date((long) value);
 
-                    dateStr = DateFormat.getDateInstance(DateFormat.MEDIUM).format(currDate);
+                        dateStr = DateFormat.getDateInstance(DateFormat.MEDIUM).format(currDate);
 
-                    if (dateStr.equals(prevDate)) {
-                        // Show hh:mm
-                        retValue = DateFormat.getTimeInstance(DateFormat.SHORT).format(currDate);
+                        if (dateStr.equals(prevDate)) {
+                            // Show hh:mm
+                            retValue = DateFormat.getTimeInstance(DateFormat.SHORT).format(currDate);
+                        } else {
+                            retValue = dateStr;
+                        }
+
+                        prevDate = dateStr;
+                        //Log.d(getClass().getName(), "Label is : " + retValue);
                     } else {
-                        retValue = dateStr;
+                        retValue = " ";
                     }
-
-                    prevDate = dateStr;
-					//Log.d(getClass().getName(), "Label is : " + retValue);
                 } else { // Format size in human readable form
                     retValue = DatabaseLoader.convertToStorageUnits(value);
                     //prevDate = "";
@@ -260,13 +271,14 @@ public class GraphFragment extends Fragment
         storageGraph.getGraphViewStyle().setHorizontalLabelsColor(Color.YELLOW);
         storageGraph.getGraphViewStyle().setVerticalLabelsColor(Color.RED);
         storageGraph.getGraphViewStyle().setTextSize(textSize);
-        //storageGraph.getGraphViewStyle().setNumHorizontalLabels(5);
-        storageGraph.getGraphViewStyle().setNumVerticalLabels(4);
+        storageGraph.getGraphViewStyle().setNumHorizontalLabels(2);
+        storageGraph.getGraphViewStyle().setNumVerticalLabels(5);
         storageGraph.getGraphViewStyle().setVerticalLabelsWidth((int)(textSize * 4));
         //storageGraph.setMultiLineXLabel(true, ";");
         ((LineGraphView)storageGraph).setDrawBackground(true);
         ((LineGraphView)storageGraph).setDrawDataPoints(true);
         ((LineGraphView)storageGraph).setDataPointsRadius(pointSize);
+        storageGraph.highlightSample(0, true, locData.size() - 1);
         // Add selector callback
         storageGraph.setSelectHandler(this);
 
@@ -276,38 +288,36 @@ public class GraphFragment extends Fragment
 
     // Helper to manipulate graph viewport
     public void setViewport() {
-        long viewPortWidth;
-        Calendar calcView;
+        Calendar calcView[];
 
-        calcView = Calendar.getInstance();
+        // Start time
+        calcView = new Calendar[2];
+        calcView[0] = Calendar.getInstance();
+        calcView[0].setTimeInMillis(startTime);
+        calcView[1] = (Calendar)calcView[0].clone();
 
         if (timeInterval == null)
             timeInterval = "Day";
 
         // Override with setting
         if (timeInterval.equals("Hour"))
-            calcView.add(Calendar.HOUR_OF_DAY, -1);
+            calcView[1].add(Calendar.HOUR_OF_DAY, -1);
         else if (timeInterval.equals("Day"))
-            calcView.add(Calendar.DAY_OF_MONTH, -1);
+            calcView[1].add(Calendar.DAY_OF_MONTH, -1);
         else if (timeInterval.equals("Week"))
-            calcView.add(Calendar.WEEK_OF_YEAR, -1);
+            calcView[1].add(Calendar.WEEK_OF_YEAR, -1);
         else if (timeInterval.equals("Month"))
-            calcView.add(Calendar.MONTH, -1);
+            calcView[1].add(Calendar.MONTH, -1);
         else
-            calcView.add(Calendar.YEAR, -1);
+            calcView[1].add(Calendar.YEAR, -1);
 
-        viewPortWidth = Calendar.getInstance().getTimeInMillis() - calcView.getTimeInMillis();
-
+        viewPortWidth = calcView[0].getTimeInMillis() - calcView[1].getTimeInMillis();
+        //Calendar.getInstance().getTimeInMillis() - calcView.getTimeInMillis();
+        secondSelect = false;
         if (storageGraph != null) {
-            long startView = startTime;
-            /*
-            if (startTime > (viewPortWidth / 10))
-                startView = startTime - (viewPortWidth / 10);
-            else
-                startView = 0;
-                */
-            storageGraph.setViewPort(startView, viewPortWidth);
-            Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + startView +
+            storageGraph.setViewPort(startTime, viewPortWidth);
+            storageGraph.scrollToEnd();
+            Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + startTime +
                     " - " + viewPortWidth);
         }
     }
@@ -326,7 +336,7 @@ public class GraphFragment extends Fragment
 
     // Graph select handler
     @Override
-    public void onGraphSelect(int i) {
+    public void onGraphSelect(int i, int start) {
         String [] logLines;
 
         if (logMessages.length == 0) {
@@ -339,9 +349,18 @@ public class GraphFragment extends Fragment
             logLines = logMessages[i].split("\n");
         }
 
-        // Call dialog
-        ChangeLogFragment dialog = ChangeLogFragment.newInstance(logLines);
-        dialog.show(getActivity().getSupportFragmentManager(), "dialog");
+        if (secondSelect == false && i == selectedPoint)
+            secondSelect = true;
+        Log.d(getClass().getName(), "onSelect " + i + ", selected " + selectedPoint + ", starting " + start);
+        storageGraph.highlightSample(0, true, i - start);
+        if (secondSelect) {
+            // Call dialog
+            ChangeLogFragment dialog = ChangeLogFragment.newInstance(logLines);
+            dialog.show(getActivity().getSupportFragmentManager(), "dialog");
+        }
+
+        selectedPoint = i;
+        secondSelect = false;
     }
 
     /**
