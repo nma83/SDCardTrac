@@ -79,9 +79,14 @@ public class FileObserverService extends Service {
 //    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
     	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) {
     	    // Restart by OS or activity
-    	    // Create a dummy entry
-    	    queueEvent(basePath, FileObserver.ATTRIB, null);
-    	    storeAllEvents(true);
+    	    if (trackingDB != null) {
+    	        List <ContentValues> tmpList = trackingDB.getValues();
+    	        if (tmpList.isEmpty()) {
+        	        // Create a dummy entry
+        	        queueEvent(basePath, FileObserver.ATTRIB, null);
+    	            storeAllEvents(true);
+    	        }
+    	    }
     	    
     		for (UsageFileObserver i : fobsList) {
     			i.startWatching();
@@ -222,25 +227,22 @@ public class FileObserverService extends Service {
         	changeLog[0] = "- External event -";
         } else {
         	for (ObservedEvent i : uniqEvents) {
-        		String changeTag = null;
+        		String changeTag;
         		
         		if ((i.eventMask & FileObserver.CREATE) != 0)
-        			changeTag += "Created,";
+        			changeTag = "Created";
         		if ((i.eventMask & FileObserver.DELETE) != 0)
-        			changeTag += "Deleted,";
+        			changeTag = "Deleted";
         		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
-        			changeTag += "Moved,";
+        			changeTag = "Moved";
         		if (changeTag == null) {
         		    if (i.eventMask != 0)
         		//(i.eventMask & FileObserver.MODIFY) != 0)
-        			    changeTag = "Modified,";
+        			    changeTag = "Modified";
         			else
         			    changeTag = "No event";
         		}
 
-        	    if (changeTag.endsWith(",")) {
-        		    changeTag = changeTag.substring(0, changeTag.length());
-        	    }
         	    changeTag += ": " + i.filePath;
         		
         		changeLog[numLogs++] = changeTag;
