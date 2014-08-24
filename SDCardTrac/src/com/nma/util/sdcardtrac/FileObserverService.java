@@ -184,11 +184,17 @@ public class FileObserverService extends Service {
     	String [] changeLog;
     	int numLogs = 0;
     	// Use synchronized version since queueEvent may be modifying the eventsList
-    	ArrayList <ObservedEvent> uniqEvents = new ArrayList <ObservedEvent> ();
+    	ArrayList <ObservedEvent> uniqEvents = (ArrayList <ObservedEvent>)eventsList.clone();
+    	//new ArrayList <ObservedEvent> ();
     	
     	if (ignoreEvents) {
     		numLogs = 1;
     	} else {
+    	    eventsList.clear();
+    	}
+    	
+    	/** Replaced with HashMap below 
+    	 * else {
     		// Return if no events
     		if (eventsList.isEmpty()) {
     			Log.w(this.getClass().getName(), "No events yet!");
@@ -213,6 +219,8 @@ public class FileObserverService extends Service {
 
     		eventsList.clear();
     	}
+    	*/
+    	
     	
     	// Get the space data
     	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
@@ -221,31 +229,62 @@ public class FileObserverService extends Service {
 
         // Store in database
         trackingDB.openToWrite();
-        changeLog = new String[numLogs];
+        HashMap <String, char> fileEvents = new HashMap<String, char>();
+        
+        // Get most relevant event for a file
+        for (ObservedEvent i : uniqEvents) {
+            String filePath = i.filePath;
+            boolean created = ((i.eventMask & FileObserver.CREATE) != 0);
+            boolean deleted = ((i.eventMask & FileObserver.DELETE) != 0);
+            boolean moved = ((i.eventMask & FileObserver.MOVED_TO) != 0);
+            boolean modified = ((i.eventMask & FileObserver.MODIFIED) != 0);
+            
+            if (fileEvents.containsKey(filePath)) {
+                char newVal = null;
+                // Keep only the latest event flag
+                switch ((char)fileEvents.get(filePath)) {
+                    case 'C': // Was created
+                    // Delete and move override
+                    if (moved)
+                        newVal = 'V';
+                    if (deleted)
+                        newVal = 'D';
+                    break;
+                    case 'D': // Was deleted
+                    // Create overrides
+                    if (created)
+                        newVal = 'C';
+                    break;
+                    case 'V': // Was moved
+                    // Delete and create overrides
+                    if (deleted)
+                        newVal = 'D';
+                    if (created)
+                        newVal = 'C';
+                    break;
+                    case 'M': // Modified
+                    // All override
+                    newVal = mapEventToChar(i.eventMask);
+                    break;
+                    default:
+                    break;
+                }
+                
+                if (newVal != null)
+                    fileEvents.put(filePath, newVal);
+            } else {
+                fileEvents.put(filePath, mapEventToChar(i.eventMask));
+            }
+        }
+        
+        // Create message from map of file and events
+        changeLog = new String[fileEvents.size()];
         numLogs = 0;
         if (ignoreEvents) {
         	changeLog[0] = "- External event -";
         } else {
-        	for (ObservedEvent i : uniqEvents) {
-        		String changeTag;
-        		
-        		if ((i.eventMask & FileObserver.CREATE) != 0)
-        			changeTag = "Created";
-        		if ((i.eventMask & FileObserver.DELETE) != 0)
-        			changeTag = "Deleted";
-        		if ((i.eventMask & FileObserver.MOVED_TO) != 0)
-        			changeTag = "Moved";
-        		if (changeTag == null) {
-        		    if (i.eventMask != 0)
-        		//(i.eventMask & FileObserver.MODIFY) != 0)
-        			    changeTag = "Modified";
-        			else
-        			    changeTag = "No event";
-        		}
-
-        	    changeTag += ": " + i.filePath;
-        		
-        		changeLog[numLogs++] = changeTag;
+        	for (String k : fileEvents.keySet()) {
+        		changeLog[numLogs++] = fileEvents.get(k) + ":" + k;
         	}
         }
         
@@ -260,5 +299,23 @@ public class FileObserverService extends Service {
         trackingDB.insert(GraphActivity.TAB_NAME_EXT_STORAGE, System.currentTimeMillis(),
                 (int)usedSpace, sb.toString());
         trackingDB.close();
+    }
+    
+    // Helper
+    private char mapEventToChar(int eventMask) {
+        char changeTag = null;
+           		if ((eventMask & FileObserver.CREATE) != 0)
+        			changeTag = 'C';
+        		if ((eventMask & FileObserver.DELETE) != 0)
+        			changeTag = 'D';
+        		if ((eventMask & FileObserver.MOVED_TO) != 0)
+        			changeTag = 'V';
+        		if (changeTag == null) {
+        		    if (eventMask != 0)
+        			    changeTag = 'M';
+        			else
+        			    changeTag = 'N';
+        		}
+        return changeTag;
     }
 }
