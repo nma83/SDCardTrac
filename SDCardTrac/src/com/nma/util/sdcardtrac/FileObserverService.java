@@ -286,6 +286,8 @@ public class FileObserverService extends Service {
         	for (String k : fileEvents.keySet()) {
         		changeLog[numLogs++] = fileEvents.get(k) + ":" + k;
         	}
+        	// Sort
+        	Arrays.sort(changeLog);
         }
         
         StringBuilder sb = new StringBuilder();
