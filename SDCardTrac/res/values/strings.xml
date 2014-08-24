@@ -20,4 +20,9 @@
     <string name="db_empty_error">
         No data found. Please check if tracking is enabled in settings or check again later.
     </string>
+
+    <string name="app_booted">app booted</string>
+    <string name="media_not_mounted">Storage device unavailable,
+        please check if phone is in USB storage mode or the physical device is inserted.
+    </string>
 </resources>

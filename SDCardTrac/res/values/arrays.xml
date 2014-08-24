@@ -15,10 +15,10 @@
         <item>24 hours</item>
     </string-array>
     <string-array name="update_intervals_phase_val">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
+        <item>900</item>
+        <item>1800</item>
+        <item>3600</item>
+        <item>43200</item>
+        <item>86400</item>
     </string-array>
 </resources>

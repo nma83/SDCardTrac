@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -55,7 +56,7 @@ public class GraphFragment extends Fragment
     private GraphView storageGraph;
     private GraphViewSeries graphSeries;
     private String graphLabel;
-    private long maxStorage, startTime, viewPortWidth;
+    private long maxStorage, startTime, endTime, viewPortWidth;
     private ProgressDialog loadingDBDialog;
 
     private static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
@@ -100,6 +101,7 @@ public class GraphFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        setRetainInstance(true);
         // Load data
         getLoaderManager().initLoader(0, null, this);
 
@@ -109,8 +111,11 @@ public class GraphFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        setRetainInstance(true);
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_graph, container, false);
+        View retView = inflater.inflate(R.layout.fragment_graph, container, false);
+
+        return retView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -139,7 +144,7 @@ public class GraphFragment extends Fragment
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        Log.d("FragLoader", "Returning created loader");
+        //Log.d("FragLoader", "Returning created loader");
         // TODO create right builder using id
         return new DatabaseLoader(getActivity(), storageType);
     }
@@ -147,12 +152,12 @@ public class GraphFragment extends Fragment
     @Override
     public void onLoadFinished(Loader<List<DatabaseLoader.DatabaseRow>> loader,
                                List<DatabaseLoader.DatabaseRow> data) {
-        Log.d("FragLoader", "Done loading with " + data.size() + " items");
+        //Log.d("FragLoader", "Done loading with " + data.size() + " items");
         locData = data;
 
-        if (locData.size() == 0) {
+        if (locData.size() <= 1) {
             // Flag an error
-            Toast.makeText(getActivity(), R.string.db_empty_error, Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), R.string.db_empty_error, Toast.LENGTH_SHORT).show();
             // Goto settings
             if (firstView && mListener != null) {
                 firstView = false;
@@ -161,13 +166,19 @@ public class GraphFragment extends Fragment
         } else {
             createGraphData();
 
-            drawGraph();
+            drawGraph(((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)));
         }
     }
 
     @Override
     public void onLoaderReset(Loader loader) {
 
+    }
+
+    @Override
+    public void onViewCreated (View view, Bundle savedInstanceState) {
+        if (graphSeries != null)
+            drawGraph((LinearLayout)view.findViewById(R.id.graph_fragment));
     }
 
     // Create the graph plot
@@ -187,7 +198,7 @@ public class GraphFragment extends Fragment
 
         for (DatabaseLoader.DatabaseRow row : locData) {
             timeStamp = row.getTime();
-            //endTime = timeStamp;
+            endTime = timeStamp;
             int usage = row.getUsage();
             graphData[i] = new GraphView.GraphViewData(timeStamp, usage);
 
@@ -216,7 +227,7 @@ public class GraphFragment extends Fragment
             maxStorage = (long)Math.ceil((double)maxStorage / 1000000000) * 1000000000;
     }
 
-    private void drawGraph() {
+    private void drawGraph(LinearLayout view) {
         float textSize, dispScale, pointSize;
 
         // Determine text size
@@ -266,7 +277,7 @@ public class GraphFragment extends Fragment
         storageGraph.setManualYAxis(true);
         storageGraph.setManualYAxisBounds(maxStorage, 0);
         storageGraph.setScalable(false);
-        storageGraph.setScrollable(true);
+        //storageGraph.setScrollable(true);
         storageGraph.getGraphViewStyle().setGridColor(Color.GREEN);
         storageGraph.getGraphViewStyle().setHorizontalLabelsColor(Color.YELLOW);
         storageGraph.getGraphViewStyle().setVerticalLabelsColor(Color.RED);
@@ -278,12 +289,13 @@ public class GraphFragment extends Fragment
         ((LineGraphView)storageGraph).setDrawBackground(true);
         ((LineGraphView)storageGraph).setDrawDataPoints(true);
         ((LineGraphView)storageGraph).setDataPointsRadius(pointSize);
-        storageGraph.highlightSample(0, true, locData.size() - 1);
+        //storageGraph.highlightSample(0, true, locData.size() - 1);
         // Add selector callback
         storageGraph.setSelectHandler(this);
 
         setViewport();
-        ((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)).addView(storageGraph);
+        if (view != null)
+            view.addView(storageGraph);
     }
 
     // Helper to manipulate graph viewport
@@ -316,7 +328,12 @@ public class GraphFragment extends Fragment
         secondSelect = false;
         if (storageGraph != null) {
             storageGraph.setViewPort(startTime, viewPortWidth);
-            storageGraph.scrollToEnd();
+            if (viewPortWidth > (endTime - startTime))
+                storageGraph.setScrollable(false);
+            else {
+                storageGraph.setScrollable(true);
+                storageGraph.scrollToEnd();
+            }
             Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + startTime +
                     " - " + viewPortWidth);
         }

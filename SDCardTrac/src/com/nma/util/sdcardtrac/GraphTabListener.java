@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 
 /**
  * Created by naren on 7/9/14.
@@ -25,8 +26,10 @@ public class GraphTabListener implements ActionBar.TabListener {
         if (mFragment == null) {
             // If not, instantiate and add it to the activity
             mFragment = GraphFragment.newInstance(mTag, mActivity.getTimeInterval());
+            Log.d(getClass().getName(), "Created " + mFragment);
             ft.replace(R.id.graph_layout, mFragment, mTag);
         } else {
+            Log.d(getClass().getName(), "Attach " + mFragment.isDetached() + ":" + mFragment);
             if (mFragment.isDetached())
                 // If it exists, simply attach it in order to show it
                 ft.attach(mFragment);
@@ -36,6 +39,7 @@ public class GraphTabListener implements ActionBar.TabListener {
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
         if (mFragment != null) {
+            Log.d(getClass().getName(), "Detach " + mFragment);
             // Detach the fragment, because another one is being attached
             ft.detach(mFragment);
         }

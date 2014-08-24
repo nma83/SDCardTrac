@@ -35,6 +35,7 @@ class DatabaseManager {
 
 	private Context context;
 
+    // Helper
 	public DatabaseManager(Context c){
 		context = c;
 	}

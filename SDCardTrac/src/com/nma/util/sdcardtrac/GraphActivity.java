@@ -47,10 +47,12 @@ public class GraphActivity extends ActionBarActivity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
         // TEMP
+        Log.d(getClass().getName(), "Creating 1");
         actionBar.addTab(actionBar.newTab().setText(TAB_NAME_EXT_STORAGE)
         .setTabListener(new GraphTabListener(this, TAB_NAME_EXT_STORAGE)));
+        /*Log.d(getClass().getName(), "Creating 2");
         actionBar.addTab(actionBar.newTab().setText(TAB_NAME_INT_STORAGE)
-        .setTabListener(new GraphTabListener(this, TAB_NAME_INT_STORAGE)));
+        .setTabListener(new GraphTabListener(this, TAB_NAME_INT_STORAGE)));*/
 
         durationSel = (Spinner)findViewById(R.id.graph_action_bar_spinner);
         durationSel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -95,7 +97,11 @@ public class GraphActivity extends ActionBarActivity
     private void refreshGraph(String value) {
         for (Fragment frag : getSupportFragmentManager().getFragments()) {
             if (frag != null) {
-                ((GraphFragment)frag).setTimeInterval(value, frag.isVisible());
+                if (frag instanceof GraphFragment &&
+                        frag.getArguments() != null) {
+                    ((GraphFragment) frag).setTimeInterval(value, frag.isVisible());
+                    Log.d(getClass().getName(), "Refreshing " + frag);
+                }
             }
         }
     }

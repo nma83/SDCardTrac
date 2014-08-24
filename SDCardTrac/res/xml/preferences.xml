@@ -5,7 +5,7 @@
     android:key = "enable_tracker"
     android:title = "@string/enable_tracker"
     android:summary= "@string/enable_tracker_summ"
-    android:defaultValue="true"
+    android:defaultValue="false"
     />
 <ListPreference
     android:dependency="enable_tracker"
