@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Environment;
@@ -80,7 +81,8 @@ public class FileObserverService extends Service {
     	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) {
     	    // Restart by OS or activity
     	    if (trackingDB != null) {
-    	        List <ContentValues> tmpList = trackingDB.getValues();
+                trackingDB.openToRead();
+    	        List <ContentValues> tmpList = trackingDB.getValues(basePath, 0, 0);
     	        if (tmpList.isEmpty()) {
         	        // Create a dummy entry
         	        queueEvent(basePath, FileObserver.ATTRIB, null);
@@ -227,7 +229,7 @@ public class FileObserverService extends Service {
         	changeLog[0] = "- External event -";
         } else {
         	for (ObservedEvent i : uniqEvents) {
-        		String changeTag;
+        		String changeTag = null;
         		
         		if ((i.eventMask & FileObserver.CREATE) != 0)
         			changeTag = "Created";
