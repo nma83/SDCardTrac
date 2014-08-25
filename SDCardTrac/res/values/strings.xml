@@ -24,4 +24,17 @@
     <string name="media_not_mounted">Storage device unavailable,
         please check if phone is in USB storage mode or the physical device is inserted.
     </string>
+
+    <string name="help_text">
+        <b>StorageTrac</b> plots activity in your device\'s external storage(s).
+        \n\n
+            - <b>Touch</b> to select a point \n
+            - <b>Touch again</b> to view activity at selected point \n
+            - <b>Swipe</b> right to view different types of activity \n\n
+        <u><big>Credits</big></u>\n
+        - <a href="http://android-graphview.org/">android-graphview.org</a>\n
+        - <a href="http://findicons.com">findicons.com</a>
+    </string>
+    <string name="help">Help</string>
+    <string name="back">Back</string>
 </resources>

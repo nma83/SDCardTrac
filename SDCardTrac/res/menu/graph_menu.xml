@@ -9,4 +9,7 @@
     <item android:id="@+id/graph_settings"
         android:title="Settings">
     </item>
+    <item android:id="@+id/help"
+        android:title="Help">
+    </item>
 </menu>

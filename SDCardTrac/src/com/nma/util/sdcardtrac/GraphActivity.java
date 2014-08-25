@@ -8,19 +8,29 @@ package com.nma.util.sdcardtrac;
 import android.app.AlertDialog;
 import android.app.Dialog;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 public class GraphActivity extends ActionBarActivity
     implements GraphFragment.OnFragmentInteractionListener {
@@ -29,12 +39,15 @@ public class GraphActivity extends ActionBarActivity
 	private static final int DIALOG_CHANGELOG = 1;
     public static final String TAB_NAME_INT_STORAGE = "Internal";
     public static final String TAB_NAME_EXT_STORAGE = "External";
+    public static final String SHOW_HELP_TAG = "showHelp";
     private String interval;
     ActionBar actionBar;
 	
 	@Override
 	public void onCreate(Bundle savedInstance) {
 		Spinner durationSel;
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean showTips = pref.getBoolean(SHOW_HELP_TAG, true);
 
 		super.onCreate(savedInstance);
 		setContentView(R.layout.graph);
@@ -68,6 +81,14 @@ public class GraphActivity extends ActionBarActivity
 
             }
         });
+
+        // Help on first
+        if (showTips) {
+            showHelp();
+            SharedPreferences.Editor edit = pref.edit();
+            edit.putBoolean(SHOW_HELP_TAG, false);
+            edit.commit();
+        }
     }
 
 	// Menu creating and handling
@@ -87,6 +108,9 @@ public class GraphActivity extends ActionBarActivity
 	            return true;
             case R.id.graph_settings:
                 showSettings();
+                return true;
+            case R.id.help:
+                showHelp();
                 return true;
 	    }
 	    
@@ -136,5 +160,11 @@ public class GraphActivity extends ActionBarActivity
                         .detach(frag).attach(frag)
                         .commit();
         }
+    }
+
+    // Help popup
+    private void showHelp() {
+        final HelpFragment help = new HelpFragment();
+        help.show(getSupportFragmentManager(), "help");
     }
 }
