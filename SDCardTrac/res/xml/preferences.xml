@@ -4,7 +4,6 @@
 <CheckBoxPreference
     android:key = "enable_tracker"
     android:title = "@string/enable_tracker"
-    android:summary= "@string/enable_tracker_summ"
     android:defaultValue="false"
     />
 <ListPreference
@@ -14,7 +13,7 @@
     android:dialogTitle = "@string/tracker_update_interval"
     android:entries = "@array/update_intervals_phase"
     android:entryValues = "@array/update_intervals_phase_val"
-    android:defaultValue= "0"
+    android:defaultValue= "900000"
     />
 <Preference
     android:key = "tracker_delete_data"

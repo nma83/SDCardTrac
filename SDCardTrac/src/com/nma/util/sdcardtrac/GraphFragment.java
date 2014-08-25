@@ -145,7 +145,6 @@ public class GraphFragment extends Fragment
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         //Log.d("FragLoader", "Returning created loader");
-        // TODO create right builder using id
         return new DatabaseLoader(getActivity(), storageType);
     }
 

@@ -9,7 +9,9 @@ import android.util.Log;
 import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -73,8 +75,10 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
             long timeStamp = Long.parseLong((String)d.get(DatabaseManager.ID_COLUMN));
             int usage = Integer.parseInt((String)d.get(DatabaseManager.DELTA_COLUMN));
             String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
-            changeLog = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-                    .format(timeStamp)
+            Date dateStamp = new Date(timeStamp);
+            SimpleDateFormat dateFmt = new SimpleDateFormat("dd LLL yyyy, K:m a");
+            //changeLog = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+            changeLog = dateFmt.format(dateStamp)
                     + ":\n" + changeLog;
 
             if (usage > maxUsage) maxUsage = usage;

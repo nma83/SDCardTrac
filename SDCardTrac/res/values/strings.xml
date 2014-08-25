@@ -2,13 +2,12 @@
 <resources>
 
     <string name="hello">Hello World, SDCardTracActivity!</string>
-    <string name="app_name">SDCardTrac</string>
+    <string name="app_name">StorageTrac</string>
     <string name="default_service_start_offset_in_s">10</string>
 
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="enable_tracker">Enable tracking</string>
-    <string name="enable_tracker_summ">Active</string>
 
     <string name="tracker_update_interval">Update interval</string>
     <string name="tracker_delete_data">Clear history</string>

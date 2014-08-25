@@ -7,6 +7,8 @@ package com.nma.util.sdcardtrac;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -77,12 +79,13 @@ public class FileObserverService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
     	// Decode the intent
-//    	Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
+    	//Log.d(this.getClass().getName(), "Got intent : " + intent.getAction());
     	if ((intent == null) || (intent.getAction().equals(Intent.ACTION_MAIN))) {
     	    // Restart by OS or activity
     	    if (trackingDB != null) {
                 trackingDB.openToRead();
     	        List <ContentValues> tmpList = trackingDB.getValues(basePath, 0, 0);
+                trackingDB.close();
     	        if (tmpList.isEmpty()) {
         	        // Create a dummy entry
         	        queueEvent(basePath, FileObserver.ATTRIB, null);
@@ -128,14 +131,16 @@ public class FileObserverService extends Service {
         	if (hookObs) { // Place observer on even levels, this *doesnt* work, so place on all
         		// The even level strategy would work if FileObserver operation was as it is documented
         		// Observer will call queueEvent(filePath, eventMask) of this service
-        		UsageFileObserver currObs = new UsageFileObserver(fromDir.getPath(), FOBS_EVENTS_TO_LISTEN, this);
+        		UsageFileObserver currObs = new UsageFileObserver(fromDir.getPath(),
+                        FOBS_EVENTS_TO_LISTEN, this);
         		fobsList.add(currObs); // ID of this observer is the list index
         		numObs++;
 //        		Log.d(this.getClass().getName(), "Hooking to " + fromDir.getPath());
         	}
         } catch (NullPointerException e) {
         	locError = true;
-        	Log.e(this.getClass().getName(), "Error hooking to " + fromDir.getPath() + "=" + e.toString());
+        	Log.e(this.getClass().getName(), "Error hooking to " + fromDir.getPath() +
+                    "=" + e.toString());
         }
         //Log.d(this.getClass().getName(), "Descending into " + fromDir.getPath() + " files " + fromDir.listFiles());
         if (!locError && (fromDir != null) && (fromDir.listFiles() != null)) {
@@ -185,23 +190,23 @@ public class FileObserverService extends Service {
     public void storeAllEvents (boolean ignoreEvents) {
     	String [] changeLog;
     	int numLogs = 0;
+        ObservedEvent [] tmpEv = eventsList.toArray(new ObservedEvent[eventsList.size()]);
     	// Use synchronized version since queueEvent may be modifying the eventsList
-    	ArrayList <ObservedEvent> uniqEvents = (ArrayList <ObservedEvent>)eventsList.clone();
+    	List <ObservedEvent> uniqEvents = Arrays.asList(tmpEv);
     	//new ArrayList <ObservedEvent> ();
     	
-    	if (ignoreEvents) {
-    		numLogs = 1;
-    	} else {
-    	    eventsList.clear();
+    	if (!ignoreEvents) {
+            // Return if no events
+            if (eventsList.isEmpty()) {
+                Log.w(this.getClass().getName(), "No events yet!");
+                return;
+            }
+
+            eventsList.clear();
     	}
     	
     	/** Replaced with HashMap below 
     	 * else {
-    		// Return if no events
-    		if (eventsList.isEmpty()) {
-    			Log.w(this.getClass().getName(), "No events yet!");
-    			return;
-    		}
 
     		// Compact the change log, remove duplicate entries
     		// TODO: O(n^2) operation here, try to optimise, profile too
@@ -231,48 +236,48 @@ public class FileObserverService extends Service {
 
         // Store in database
         trackingDB.openToWrite();
-        HashMap <String, char> fileEvents = new HashMap<String, char>();
-        
+        HashMap <String, Character> fileEvents = new HashMap<String, Character>();
+
         // Get most relevant event for a file
         for (ObservedEvent i : uniqEvents) {
             String filePath = i.filePath;
             boolean created = ((i.eventMask & FileObserver.CREATE) != 0);
             boolean deleted = ((i.eventMask & FileObserver.DELETE) != 0);
             boolean moved = ((i.eventMask & FileObserver.MOVED_TO) != 0);
-            boolean modified = ((i.eventMask & FileObserver.MODIFIED) != 0);
-            
+            boolean modified = ((i.eventMask & FileObserver.MODIFY) != 0);
+
             if (fileEvents.containsKey(filePath)) {
-                char newVal = null;
+                char newVal = 0;
                 // Keep only the latest event flag
                 switch ((char)fileEvents.get(filePath)) {
                     case 'C': // Was created
-                    // Delete and move override
-                    if (moved)
-                        newVal = 'V';
-                    if (deleted)
-                        newVal = 'D';
-                    break;
+                        // Delete and move override
+                        if (moved)
+                            newVal = 'V';
+                        if (deleted)
+                            newVal = 'D';
+                        break;
                     case 'D': // Was deleted
-                    // Create overrides
-                    if (created)
-                        newVal = 'C';
-                    break;
+                        // Create overrides
+                        if (created)
+                            newVal = 'C';
+                        break;
                     case 'V': // Was moved
-                    // Delete and create overrides
-                    if (deleted)
-                        newVal = 'D';
-                    if (created)
-                        newVal = 'C';
-                    break;
+                        // Delete and create overrides
+                        if (deleted)
+                            newVal = 'D';
+                        if (created)
+                            newVal = 'C';
+                        break;
                     case 'M': // Modified
-                    // All override
-                    newVal = mapEventToChar(i.eventMask);
-                    break;
+                        // All override
+                        newVal = mapEventToChar(i.eventMask);
+                        break;
                     default:
-                    break;
+                        break;
                 }
-                
-                if (newVal != null)
+
+                if (newVal != 0)
                     fileEvents.put(filePath, newVal);
             } else {
                 fileEvents.put(filePath, mapEventToChar(i.eventMask));
@@ -288,8 +293,8 @@ public class FileObserverService extends Service {
         	for (String k : fileEvents.keySet()) {
         		changeLog[numLogs++] = fileEvents.get(k) + ":" + k;
         	}
-        	// Sort
-        	Arrays.sort(changeLog);
+        	// Sort (not really needed)
+        	//Arrays.sort(changeLog);
         }
         
         StringBuilder sb = new StringBuilder();
@@ -307,19 +312,19 @@ public class FileObserverService extends Service {
     
     // Helper
     private char mapEventToChar(int eventMask) {
-        char changeTag = null;
-           		if ((eventMask & FileObserver.CREATE) != 0)
-        			changeTag = 'C';
-        		if ((eventMask & FileObserver.DELETE) != 0)
-        			changeTag = 'D';
-        		if ((eventMask & FileObserver.MOVED_TO) != 0)
-        			changeTag = 'V';
-        		if (changeTag == null) {
-        		    if (eventMask != 0)
-        			    changeTag = 'M';
-        			else
-        			    changeTag = 'N';
-        		}
+        char changeTag = 0;
+        if ((eventMask & FileObserver.CREATE) != 0)
+            changeTag = 'C';
+        if ((eventMask & FileObserver.DELETE) != 0)
+            changeTag = 'D';
+        if ((eventMask & FileObserver.MOVED_TO) != 0)
+            changeTag = 'V';
+        if (changeTag == 0) {
+            if (eventMask != 0)
+                changeTag = 'M';
+            else
+                changeTag = 'N';
+        }
         return changeTag;
     }
 }

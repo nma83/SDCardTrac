@@ -35,18 +35,25 @@ public class DeltaCompute extends BroadcastReceiver {
 			// Get preferences first to determine the alarm parameters
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
 			// Get configuration
-			int startOffset = prefs.getInt("AlarmStartOffset", SDCardTracActivity.DEFAULT_START_OFFSET_SEC);
-			long triggerInterval = prefs.getLong("AlarmTriggerInterval", SDCardTracActivity.DEFAULT_UPDATE_INTERVAL_SEC);
-			boolean alarmEnb = prefs.getBoolean("AlarmEnabled", false);
+			int startOffset = prefs.getInt("AlarmStartOffset", // UNUSED
+                    SettingsActivity.DEFAULT_START_OFFSET_SEC);
+            String trigPref = prefs.getString(SettingsActivity.STORE_TRIGGER_KEY, null);
+			long triggerInterval;
+
+            if (trigPref != null)
+                triggerInterval = Long.parseLong(trigPref);
+            else
+                triggerInterval = SettingsActivity.DEFAULT_UPDATE_INTERVAL_MSEC;
+
+			boolean alarmEnb = prefs.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
 
 			if (alarmEnb) {
 				alarmHelp = new AlarmHelper(ctx);
 				alarmHelp.manageAlarm(true, false, startOffset, triggerInterval);
 
-				// Remember that alarm is enabled
-				SharedPreferences.Editor prefEdit = prefs.edit();
-				prefEdit.putBoolean("AlarmEnabled", true);
-				prefEdit.apply();
+				/*SharedPreferences.Editor prefEdit = prefs.edit();
+				prefEdit.putBoolean(, true);
+				prefEdit.apply();*/
 
 				Log.d(getClass().getName(), "Enabled alarms after boot!");
 			}

@@ -95,6 +95,11 @@ public class GraphActivity extends ActionBarActivity
 
     // Refresh all graphs
     private void refreshGraph(String value) {
+        // Trigger collection
+        Intent triggerCollect = new Intent(this, FileObserverService.class);
+        triggerCollect.setAction(Intent.ACTION_VIEW);
+        startService(triggerCollect);
+
         for (Fragment frag : getSupportFragmentManager().getFragments()) {
             if (frag != null) {
                 if (frag instanceof GraphFragment &&
