@@ -2,6 +2,7 @@ package com.nma.util.sdcardtrac;
 
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
@@ -24,6 +25,8 @@ import android.widget.TextView;
  */
 public class HelpFragment extends DialogFragment
     implements DialogInterface.OnClickListener {
+    private GraphFragment.OnFragmentInteractionListener mListener;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -69,6 +72,25 @@ public class HelpFragment extends DialogFragment
 */
     @Override
     public void onClick(DialogInterface dialog, int which) {
-        // Empty
+        // Signal exit
+        mListener.onFragmentInteraction(getString(R.string.exit_help));
     }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (GraphFragment.OnFragmentInteractionListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
 }

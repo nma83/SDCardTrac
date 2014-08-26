@@ -41,6 +41,10 @@ public class FileObserverService extends Service {
         public boolean compareWith(ObservedEvent i) {
         	return (filePath.equals(i.filePath) && (eventMask == i.eventMask));
         }
+
+        public String toString() {
+            return filePath + ":" + eventMask;
+        }
     }
 
     private ConcurrentLinkedQueue <ObservedEvent> eventsList; // Periodically re-created list of events
@@ -166,10 +170,11 @@ public class FileObserverService extends Service {
     // Callback for event recording
     public void queueEvent(String filePath, int eventMask, UsageFileObserver fileObs) {
         ObservedEvent currEvent = new ObservedEvent();
-        
+
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
         currEvent.duplicate = false; // Will be updated while reporting
-        
+        if (BuildConfig.DEBUG)
+            Log.d(getClass().getName(), "queueEvent " + currEvent.toString());
 //        synchronized (syncEventsList) {
         eventsList.add(currEvent);	
 //		}
@@ -285,12 +290,17 @@ public class FileObserverService extends Service {
         }
         
         // Create message from map of file and events
-        changeLog = new String[fileEvents.size()];
+        numLogs = fileEvents.size();
+        if (numLogs == 0)
+            numLogs = 1;
+        changeLog = new String[numLogs];
         numLogs = 0;
         if (ignoreEvents) {
         	changeLog[0] = "- External event -";
         } else {
         	for (String k : fileEvents.keySet()) {
+                if (BuildConfig.DEBUG)
+                    Log.d(getClass().getName(), "fileEvent: " + k);
         		changeLog[numLogs++] = fileEvents.get(k) + ":" + k;
         	}
         	// Sort (not really needed)

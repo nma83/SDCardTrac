@@ -37,4 +37,5 @@
     </string>
     <string name="help">Help</string>
     <string name="back">Back</string>
+    <string name="exit_help">exitHelp</string>
 </resources>

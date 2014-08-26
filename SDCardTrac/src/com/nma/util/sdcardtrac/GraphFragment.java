@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -102,9 +103,9 @@ public class GraphFragment extends Fragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setRetainInstance(true);
+
         // Load data
         getLoaderManager().initLoader(0, null, this);
-
         //Log.d("Fragment:Activity", "Done with initLoader");
     }
 
@@ -145,6 +146,7 @@ public class GraphFragment extends Fragment
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         //Log.d("FragLoader", "Returning created loader");
+        getActivity().setProgressBarIndeterminateVisibility(true);
         return new DatabaseLoader(getActivity(), storageType);
     }
 
@@ -153,6 +155,7 @@ public class GraphFragment extends Fragment
                                List<DatabaseLoader.DatabaseRow> data) {
         //Log.d("FragLoader", "Done loading with " + data.size() + " items");
         locData = data;
+        getActivity().setProgressBarIndeterminateVisibility(false);
 
         if (locData.size() <= 1) {
             // Flag an error
@@ -171,7 +174,8 @@ public class GraphFragment extends Fragment
 
     @Override
     public void onLoaderReset(Loader loader) {
-
+        getActivity().setProgressBarIndeterminateVisibility(true);
+        locData = null;
     }
 
     @Override
@@ -295,6 +299,8 @@ public class GraphFragment extends Fragment
         setViewport();
         if (view != null)
             view.addView(storageGraph);
+        if (BuildConfig.DEBUG)
+            Log.d(getClass().getName(), "Drew the graph");
     }
 
     // Helper to manipulate graph viewport
@@ -350,6 +356,11 @@ public class GraphFragment extends Fragment
         //getLoaderManager().restartLoader(0, null, this);
     }
 
+    public void restartLoader() {
+        Log.d(getClass().getName(), "Restarting loader in " + storageType);
+        getLoaderManager().restartLoader(0, null, this);
+    }
+
     // Graph select handler
     @Override
     public void onGraphSelect(int i, int start) {
@@ -367,7 +378,8 @@ public class GraphFragment extends Fragment
 
         if (secondSelect == false && i == selectedPoint)
             secondSelect = true;
-        Log.d(getClass().getName(), "onSelect " + i + ", selected " + selectedPoint + ", starting " + start);
+        if (BuildConfig.DEBUG)
+            Log.d(getClass().getName(), "onSelect " + i + ", selected " + selectedPoint + ", starting " + start);
         storageGraph.highlightSample(0, true, i - start);
         if (secondSelect) {
             // Call dialog

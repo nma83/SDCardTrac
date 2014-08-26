@@ -9,12 +9,9 @@ buildscript {
 apply plugin: 'android'
 
 dependencies {
-    compile files('lib/GraphView.jar')
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
+    // compile files('lib/GraphView.jar')
+    compile project(':GraphView')
     compile 'com.android.support:appcompat-v7:18.0.+'
-    // You must install or update the Support Repository through the SDK manager to use this dependency.
     compile 'com.android.support:support-v4:19.+'
 }
 

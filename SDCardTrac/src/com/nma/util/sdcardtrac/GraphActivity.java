@@ -26,31 +26,37 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.util.Set;
+
 public class GraphActivity extends ActionBarActivity
     implements GraphFragment.OnFragmentInteractionListener {
 
-	int messageIndex;
-	private static final int DIALOG_CHANGELOG = 1;
+    int messageIndex;
+    private static final int DIALOG_CHANGELOG = 1;
     public static final String TAB_NAME_INT_STORAGE = "Internal";
     public static final String TAB_NAME_EXT_STORAGE = "External";
     public static final String SHOW_HELP_TAG = "showHelp";
     private String interval;
     ActionBar actionBar;
-	
-	@Override
-	public void onCreate(Bundle savedInstance) {
-		Spinner durationSel;
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean showTips = pref.getBoolean(SHOW_HELP_TAG, true);
+    private boolean forceSettings = false;
+    private boolean helpExit = false;
+    private boolean showTips = false;
+    private boolean alarmEnabled = false;
 
-		super.onCreate(savedInstance);
-		setContentView(R.layout.graph);
+    @Override
+    public void onCreate(Bundle savedInstance) {
+        Spinner durationSel;
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        super.onCreate(savedInstance);
+        setContentView(R.layout.graph);
 
         // ActionBar
         actionBar = getSupportActionBar();
@@ -62,18 +68,18 @@ public class GraphActivity extends ActionBarActivity
         // TEMP
         Log.d(getClass().getName(), "Creating 1");
         actionBar.addTab(actionBar.newTab().setText(TAB_NAME_EXT_STORAGE)
-        .setTabListener(new GraphTabListener(this, TAB_NAME_EXT_STORAGE)));
+                .setTabListener(new GraphTabListener(this, TAB_NAME_EXT_STORAGE)));
         /*Log.d(getClass().getName(), "Creating 2");
         actionBar.addTab(actionBar.newTab().setText(TAB_NAME_INT_STORAGE)
         .setTabListener(new GraphTabListener(this, TAB_NAME_INT_STORAGE)));*/
 
-        durationSel = (Spinner)findViewById(R.id.graph_action_bar_spinner);
+        durationSel = (Spinner) findViewById(R.id.graph_action_bar_spinner);
         durationSel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 interval = parent.getItemAtPosition(position).toString();
 
-                refreshGraph(interval);
+                refreshGraph(true, interval);
             }
 
             @Override
@@ -83,53 +89,71 @@ public class GraphActivity extends ActionBarActivity
         });
 
         // Help on first
+        showTips = pref.getBoolean(SHOW_HELP_TAG, true);
         if (showTips) {
             showHelp();
-            SharedPreferences.Editor edit = pref.edit();
-            edit.putBoolean(SHOW_HELP_TAG, false);
-            edit.commit();
+        }
+
+        // Start service
+        alarmEnabled = PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
+        boolean reInst = false;
+        if (savedInstance != null)
+            reInst = savedInstance.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
+
+        if (alarmEnabled && !reInst) {
+            Intent serviceIntent = new Intent(this, FileObserverService.class);
+            serviceIntent.setAction(Intent.ACTION_MAIN);
+            startService(serviceIntent);
         }
     }
 
-	// Menu creating and handling
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.graph_menu, menu);
-		return super.onCreateOptionsMenu(menu);
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle item selection
-	    switch (item.getItemId()) {
-	        case R.id.graph_refresh:
-	            refreshGraph(interval);
-	            return true;
+    // Menu creating and handling
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.graph_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.graph_refresh:
+                refreshGraph(false, interval);
+                return true;
             case R.id.graph_settings:
                 showSettings();
                 return true;
             case R.id.help:
                 showHelp();
                 return true;
-	    }
-	    
-	    return false;
-	}
+        }
+
+        return false;
+    }
 
     // Refresh all graphs
-    private void refreshGraph(String value) {
-        // Trigger collection
-        Intent triggerCollect = new Intent(this, FileObserverService.class);
-        triggerCollect.setAction(Intent.ACTION_VIEW);
-        startService(triggerCollect);
+    private void refreshGraph(boolean changeView, String value) {
+
+        if (!changeView) {
+            // Trigger collection
+            Intent triggerCollect = new Intent(this, FileObserverService.class);
+            triggerCollect.setAction(Intent.ACTION_VIEW);
+            startService(triggerCollect);
+        }
 
         for (Fragment frag : getSupportFragmentManager().getFragments()) {
             if (frag != null) {
                 if (frag instanceof GraphFragment &&
                         frag.getArguments() != null) {
+                    //((GraphFragment) frag).setTimeInterval(value, frag.isVisible());
+                    if (BuildConfig.DEBUG)
+                        Log.d(getClass().getName(), "Refreshing " + frag);
+                    if (!changeView)
+                        ((GraphFragment) frag).restartLoader();
                     ((GraphFragment) frag).setTimeInterval(value, frag.isVisible());
-                    Log.d(getClass().getName(), "Refreshing " + frag);
                 }
             }
         }
@@ -148,18 +172,40 @@ public class GraphActivity extends ActionBarActivity
 
     @Override
     public void onFragmentInteraction(String reason) {
-        if (reason != null &&
-            reason.equals(getString(R.string.act_goto_settings))) {
-            showSettings();
-        } else {
-            // Update the latest fragment
-            GraphFragment frag = (GraphFragment) getSupportFragmentManager().findFragmentByTag(reason);
-            Log.d("onFragmentInteraction", "Got ID " + reason + "=" + frag);
-            if (frag != null)
-                getSupportFragmentManager().beginTransaction()
-                        .detach(frag).attach(frag)
-                        .commit();
+        if (reason != null) {
+            if (reason.equals(getString(R.string.act_goto_settings)) ||
+                    reason.equals(getString(R.string.exit_help))) {
+                //showSettings();
+                forceSettings |= reason.equals(getString(R.string.act_goto_settings));
+                helpExit |= reason.equals(getString(R.string.exit_help));
+                if (forceSettings && helpExit && showTips)
+                    showSettings(); // Show settings only on first start once help is closed
+            } else {
+                // Update the latest fragment
+                GraphFragment frag = (GraphFragment) getSupportFragmentManager().findFragmentByTag(reason);
+                Log.d("onFragmentInteraction", "Got ID " + reason + "=" + frag);
+                if (frag != null)
+                    getSupportFragmentManager().beginTransaction()
+                            .detach(frag).attach(frag)
+                            .commit();
+            }
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Store flag
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor edit = pref.edit();
+        edit.putBoolean(SHOW_HELP_TAG, false);
+        edit.commit();
+        showTips = false;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle out) {
+        out.putBoolean(SettingsActivity.ALARM_RUNNING_KEY, alarmEnabled);
     }
 
     // Help popup
