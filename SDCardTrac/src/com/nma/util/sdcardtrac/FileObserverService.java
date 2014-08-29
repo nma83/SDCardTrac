@@ -238,6 +238,8 @@ public class FileObserverService extends Service {
     	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
     	long freeSpace = Environment.getExternalStorageDirectory().getFreeSpace();
     	long usedSpace = (totalSpace - freeSpace);
+	if (SettingsActivity.ENABLE_DEBUG)
+	    Log.d(getClass().getName(), "Total = " + totalSpace + ", free = " + freeSpace);
 
         // Store in database
         trackingDB.openToWrite();
@@ -316,7 +318,7 @@ public class FileObserverService extends Service {
         
 //        Log.d(this.getClass().getName(), "Inserting row - " + sb.toString());
         trackingDB.insert(GraphActivity.TAB_NAME_EXT_STORAGE, System.currentTimeMillis(),
-                (int)usedSpace, sb.toString());
+                usedSpace, sb.toString());
         trackingDB.close();
     }
     

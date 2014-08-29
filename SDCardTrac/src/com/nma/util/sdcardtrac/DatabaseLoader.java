@@ -24,10 +24,10 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
     // Class to store data required for a point in the Graph
     public static class DatabaseRow {
         private final long timeStamp;
-        private final int usage;
+        private final long usage;
         private final String changeLog;
 
-        public DatabaseRow(long ts, int us, String cl) {
+        public DatabaseRow(long ts, long us, String cl) {
             timeStamp = ts;
             usage = us;
             changeLog = cl;
@@ -37,7 +37,7 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
             return timeStamp;
         }
 
-        public int getUsage() {
+        public long getUsage() {
             return usage;
         }
 
@@ -60,7 +60,7 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
 
     @Override
     public List<DatabaseLoader.DatabaseRow> loadInBackground() {
-        int maxUsage = 0;
+        long maxUsage = 0;
         ArrayList <DatabaseRow> retVal;
         long maxStorage;
 
@@ -73,7 +73,7 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
         int i = 0;
         for (ContentValues d : dbData) {
             long timeStamp = Long.parseLong((String)d.get(DatabaseManager.ID_COLUMN));
-            int usage = Integer.parseInt((String)d.get(DatabaseManager.DELTA_COLUMN));
+            long usage = Long.parseLong((String)d.get(DatabaseManager.DELTA_COLUMN));
             String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
             Date dateStamp = new Date(timeStamp);
             SimpleDateFormat dateFmt = new SimpleDateFormat("dd LLL yyyy, K:m a");

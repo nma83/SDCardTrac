@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.lang.Math;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -202,7 +203,7 @@ public class GraphFragment extends Fragment
         for (DatabaseLoader.DatabaseRow row : locData) {
             timeStamp = row.getTime();
             endTime = timeStamp;
-            int usage = row.getUsage();
+            long usage = Math.abs(row.getUsage());
             graphData[i] = new GraphView.GraphViewData(timeStamp, usage);
 
             if (usage > maxUsage)

@@ -57,7 +57,7 @@ class DatabaseManager {
 	}
 
     // TODO Use table name
-	public long insert(String toTable, long timeStamp, int deltaSize, String changeLog){
+	public long insert(String toTable, long timeStamp, long deltaSize, String changeLog){
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(ID_COLUMN, timeStamp);
 		contentValues.put(DELTA_COLUMN, deltaSize);
