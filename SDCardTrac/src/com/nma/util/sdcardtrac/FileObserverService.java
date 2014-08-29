@@ -173,7 +173,7 @@ public class FileObserverService extends Service {
 
         currEvent.filePath = filePath; currEvent.eventMask = eventMask;
         currEvent.duplicate = false; // Will be updated while reporting
-        if (BuildConfig.DEBUG)
+        if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "queueEvent " + currEvent.toString());
 //        synchronized (syncEventsList) {
         eventsList.add(currEvent);	
@@ -299,7 +299,7 @@ public class FileObserverService extends Service {
         	changeLog[0] = "- External event -";
         } else {
         	for (String k : fileEvents.keySet()) {
-                if (BuildConfig.DEBUG)
+                if (SettingsActivity.ENABLE_DEBUG)
                     Log.d(getClass().getName(), "fileEvent: " + k);
         		changeLog[numLogs++] = fileEvents.get(k) + ":" + k;
         	}

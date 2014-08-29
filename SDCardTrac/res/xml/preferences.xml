@@ -1,22 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-<CheckBoxPreference
-    android:key = "enable_tracker"
-    android:title = "@string/enable_tracker"
-    android:defaultValue="false"
-    />
-<ListPreference
-    android:dependency="enable_tracker"
-    android:key = "tracker_update_interval"
-    android:title = "@string/tracker_update_interval"
-    android:dialogTitle = "@string/tracker_update_interval"
-    android:entries = "@array/update_intervals_phase"
-    android:entryValues = "@array/update_intervals_phase_val"
-    android:defaultValue= "900000"
-    />
-<Preference
-    android:key = "tracker_delete_data"
-    android:title = "@string/tracker_delete_data"
-    />
+    <CheckBoxPreference
+        android:key = "enable_tracker"
+        android:title = "@string/enable_tracker"
+        android:defaultValue="false"
+        />
+    <ListPreference
+        android:dependency="enable_tracker"
+        android:key = "tracker_update_interval"
+        android:title = "@string/tracker_update_interval"
+        android:dialogTitle = "@string/tracker_update_interval"
+        android:entries = "@array/update_intervals_phase"
+        android:entryValues = "@array/update_intervals_phase_val"
+        android:defaultValue= "900000"
+        />
+    <Preference
+        android:key = "tracker_delete_data"
+        android:title = "@string/tracker_delete_data"
+        />
+    <CheckBoxPreference
+        android:key = "enable_debug"
+        android:title = "@string/enable_debug"
+        android:defaultValue="false"
+        />
 </PreferenceScreen>

@@ -299,7 +299,7 @@ public class GraphFragment extends Fragment
         setViewport();
         if (view != null)
             view.addView(storageGraph);
-        if (BuildConfig.DEBUG)
+        if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "Drew the graph");
     }
 
@@ -378,7 +378,7 @@ public class GraphFragment extends Fragment
 
         if (secondSelect == false && i == selectedPoint)
             secondSelect = true;
-        if (BuildConfig.DEBUG)
+        if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "onSelect " + i + ", selected " + selectedPoint + ", starting " + start);
         storageGraph.highlightSample(0, true, i - start);
         if (secondSelect) {

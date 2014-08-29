@@ -58,6 +58,9 @@ public class GraphActivity extends ActionBarActivity
         super.onCreate(savedInstance);
         setContentView(R.layout.graph);
 
+        // Setup debug logging
+        SettingsActivity.ENABLE_DEBUG = pref.getBoolean(SettingsActivity.ENABLE_DEBUG_KEY, false);
+
         // ActionBar
         actionBar = getSupportActionBar();
         // Add a custom view with a spinner
@@ -95,8 +98,7 @@ public class GraphActivity extends ActionBarActivity
         }
 
         // Start service
-        alarmEnabled = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
+        alarmEnabled = pref.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
         boolean reInst = false;
         if (savedInstance != null)
             reInst = savedInstance.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
@@ -149,7 +151,7 @@ public class GraphActivity extends ActionBarActivity
                 if (frag instanceof GraphFragment &&
                         frag.getArguments() != null) {
                     //((GraphFragment) frag).setTimeInterval(value, frag.isVisible());
-                    if (BuildConfig.DEBUG)
+                    if (SettingsActivity.ENABLE_DEBUG)
                         Log.d(getClass().getName(), "Refreshing " + frag);
                     if (!changeView)
                         ((GraphFragment) frag).restartLoader();

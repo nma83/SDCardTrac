@@ -21,7 +21,7 @@ public class UsageFileObserver extends FileObserver {
     @Override
     public void onEvent(int event, String path) {
     	String locPath = basePath + "/" + path;
-        if (BuildConfig.DEBUG)
+        if (SettingsActivity.ENABLE_DEBUG)
     	    Log.d(getClass().getName(), "Event seen: 0x" + Integer.toHexString(event) + " @ " + locPath);
     	if (path != null) { // Enqueue only if valid, sometimes null returned after delete
     		notifyThis.queueEvent(locPath, event, this); // Send to service

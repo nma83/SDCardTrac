@@ -35,6 +35,8 @@ public class SettingsActivity extends PreferenceActivity
     public static String ALARM_RUNNING_KEY = "enable_tracker";
     public static String APP_BOOTED_KEY = "app_booted";
     public static String STORE_TRIGGER_KEY = "tracker_update_interval";
+    public static String ENABLE_DEBUG_KEY = "enable_debug";
+    public static boolean ENABLE_DEBUG = false;
 
     // Preferences
     private long storeTriggerInterval = DEFAULT_UPDATE_INTERVAL_MSEC;
@@ -207,6 +209,10 @@ public class SettingsActivity extends PreferenceActivity
                         storeTriggerInterval);
                 Log.d(getClass().getName(), "Changing alarms: " + selS);
             }
-        }
+        } else if (key.equals(ENABLE_DEBUG_KEY)) {
+	    boolean keyVal = sharedPreferences.getBoolean(key, false);
+	    Log.d(getClass().getName(), "Debug log enable was " + ENABLE_DEBUG + ", is " + keyVal);
+	    ENABLE_DEBUG = keyVal;
+	}
     }
 }
