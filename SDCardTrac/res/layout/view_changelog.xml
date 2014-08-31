@@ -13,8 +13,9 @@
        android:textStyle="bold"
        android:layout_gravity="center_horizontal|top"
        android:textAppearance="?android:attr/textAppearanceLarge" />
-   <ListView
+   <ExpandableListView
        android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
+       android:layout_height="fill_parent"
        android:id="@+id/changelog_list" />
+<!--       android:groupIndicator="@android:color/transparent" -->
 </LinearLayout>
