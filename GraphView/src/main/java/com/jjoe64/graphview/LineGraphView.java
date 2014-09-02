@@ -89,7 +89,6 @@ public class LineGraphView extends GraphView {
 				float startY = (float) (border - lastEndY) + graphheight;
 				float endX = (float) x + (horstart + 1);
 				float endY = (float) (border - y) + graphheight;
-
 				// draw data point
 				if (drawDataPoints) {
 					//fix: last value was not drawn. Draw here now the end values
@@ -111,7 +110,6 @@ public class LineGraphView extends GraphView {
 				//fix: last value not drawn as datapoint. Draw first point here, and then on every step the end values (above)
 				float first_X = (float) x + (horstart + 1);
 				float first_Y = (float) (border - y) + graphheight;
-
 				if (style.highlightPoints && (style.highlightSample == i)) {
 				    canvas.drawCircle(first_X, first_Y, dataPointsRadius*2, paint);
 				} else
@@ -186,7 +184,7 @@ public class LineGraphView extends GraphView {
      *  Method to transform (x,y) to sample point
      * @return Transformed sample index
      */
-    protected double transformPointToSample(double point, float border, int numPoints) {
+    protected double transformPointToSample(double point, float border, int width) {
         double sample;
         // Below code from LineGraphView which transforms the other way round
 //		double valX = valueX - minX;
@@ -195,8 +193,9 @@ public class LineGraphView extends GraphView {
 //		float endX = (float) x + (horstart + 1);
         double horstart = 0;
         double x = (point - horstart - 1);
-        double ratX = x / (getWidth() - 1);
+        double ratX = x / (width - 1);
         double valX = ratX * (getMaxX(false) - getMinX(false));
+
         sample = valX + getMinX(false);
         return sample;
     }

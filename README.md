@@ -11,8 +11,8 @@ The SDcard storage tracker application is meant to:
 3. Alert about space-hogging stale data (yet to be implemented)
 
 Links:
-1. [XDA Dev DB](http://forum.xda-developers.com/android/apps-games/storagetrac-record-plot-changes-t2860608)
-2. [F-Droid](https://f-droid.org/repository/browse/?fdid=com.nma.util.sdcardtrac)
+* [XDA Dev DB](http://forum.xda-developers.com/android/apps-games/storagetrac-record-plot-changes-t2860608)
+* [F-Droid](https://f-droid.org/repository/browse/?fdid=com.nma.util.sdcardtrac)
 
 More documentation can be found here in this [Google doc](https://docs.google.com/document/pub?id=1Q0nKqhSEhYnrWML8Vk1b0qgkhIejjRnSrjsRRN-oB40).
 

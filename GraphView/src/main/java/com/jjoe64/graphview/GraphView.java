@@ -359,8 +359,8 @@ abstract public class GraphView extends LinearLayout {
 	    boolean viewBefore = false;
 
             // Calculate nearest sample point
-            selectSample = GraphView.this.transformPointToSample(inEvent.getX(),
-                    GraphViewConfig.BORDER, data.length);
+            selectSample = GraphView.this.transformPointToSample
+		(inEvent.getX(), GraphViewConfig.BORDER, graphViewContentView.getWidth());
 
             for (GraphViewDataInterface i : data) {
                 if (i.getX() >= selectSample) {
@@ -387,7 +387,6 @@ abstract public class GraphView extends LinearLayout {
 	    // Check if point is in view
 	    if (viewportSize != 0) {
 		boolean redrawIt = false;
-
 		if (data[selectIndex].getX() > (viewportStart + viewportSize)) {
 		    viewportStart = data[selectIndex].getX() - (viewportSize / 2);
 		    redrawIt = true;
@@ -1159,5 +1158,5 @@ abstract public class GraphView extends LinearLayout {
         selectHandler = handle;
     }
 
-    abstract double transformPointToSample(double point, float border, int len);
+    abstract double transformPointToSample(double point, float border, int wid);
 }

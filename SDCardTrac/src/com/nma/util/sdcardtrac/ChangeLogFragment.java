@@ -159,6 +159,7 @@ public class ChangeLogFragment extends DialogFragment
             View root = inflater.inflate(R.layout.view_changelog, container, false);
             ExpandableListView listView = (ExpandableListView)root.findViewById(R.id.changelog_list);
             TextView textView = (TextView)root.findViewById(R.id.changelog_heading);
+            TextView statView = (TextView)root.findViewById(R.id.changelog_status);
             LinearLayout layout = (LinearLayout)root.findViewById(R.id.changelog_layout);
 
             // Make the list
@@ -172,16 +173,25 @@ public class ChangeLogFragment extends DialogFragment
 	    // Filter common basenames into groups
 	    Arrays.sort(listItems);
 	    adapter[position].clear();
-	    HashMap <String, Boolean> baseNames = new HashMap<String, Boolean>();
-	    for (String i : listItems) {
-		String iBaseName = extractBaseName(i, 3); // Extract 3 dir levels
-		//Log.d("tmp", "Base name=" + iBaseName + " for " + i);
-		if (!baseNames.containsKey(iBaseName)) {
-		    adapter[position].addGroup(iBaseName);
-		    baseNames.put(iBaseName, true);
+
+	    // Check for valid path name
+	    if (listItems[0].startsWith("/")) {
+		HashMap <String, Boolean> baseNames = new HashMap<String, Boolean>();
+		for (String i : listItems) {
+		    String iBaseName = extractBaseName(i, 3); // Extract 3 dir levels
+		    //Log.d("tmp", "Base name=" + iBaseName + " for " + i);
+		    if (!baseNames.containsKey(iBaseName)) {
+			adapter[position].addGroup(iBaseName);
+			baseNames.put(iBaseName, true);
+		    }
+		    if (iBaseName.length() != i.length())
+			adapter[position].addChild(i.substring(iBaseName.length() + 1, i.length()));
 		}
-		if (iBaseName.length() != i.length())
-		    adapter[position].addChild(i.substring(iBaseName.length() + 1, i.length()));
+		// No status 
+		statView.setVisibility(View.GONE);
+	    } else {
+		// Set status view
+		statView.setText(getString(R.string.no_files));
 	    }
 
             listView.setAdapter(adapter[position]);
@@ -232,6 +242,7 @@ public class ChangeLogFragment extends DialogFragment
         // Sample data set.  children[i] contains the children (String[]) for groups[i].
         private List<String> groups;
         private List<List<String>> children;
+	private boolean noItems = false;
         
 	public MyExpandableListAdapter() {
 	    groups = new ArrayList();
@@ -303,10 +314,10 @@ public class ChangeLogFragment extends DialogFragment
         public View getGroupView(int groupPosition, boolean isExpanded, View convertView,
 				 ViewGroup parent) {
             TextView textView = getGenericView();
-	    boolean noItems;
 	    String str = (String)getGroup(groupPosition);
 
-	    noItems = str.equals("No files detected");
+	    if (groupPosition == 0)
+		noItems = str.equals("No files detected");
 
             textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
             textView.setText(getGroup(groupPosition).toString());
@@ -320,6 +331,10 @@ public class ChangeLogFragment extends DialogFragment
         public boolean hasStableIds() {
             return true;
         }
+
+	public boolean isEmpty() {
+	    return noItems;
+	}
 
 	public void clear() {
 	    int i = 0;
