@@ -58,7 +58,7 @@ public class GraphFragment extends Fragment
     private GraphView storageGraph;
     private GraphViewSeries graphSeries;
     private String graphLabel;
-    private long maxStorage, startTime, endTime, viewPortWidth;
+    private long maxStorage, startTime, endTime, viewPortStart, viewPortWidth;
     private ProgressDialog loadingDBDialog;
 
     private static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
@@ -66,6 +66,7 @@ public class GraphFragment extends Fragment
     private static boolean firstView = true;
     private boolean secondSelect = false;
     private int selectedPoint = 0;
+    private boolean redraw = false;
 
     /**
      * Use this factory method to create a new instance of
@@ -93,6 +94,7 @@ public class GraphFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+	redraw = false;
         if (getArguments() != null) {
             storageType = getArguments().getString(ARG_STORAGE_TYPE);
             timeInterval = getArguments().getString(ARG_TIME_INTERVAL);
@@ -104,6 +106,12 @@ public class GraphFragment extends Fragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setRetainInstance(true);
+
+	if (savedInstanceState != null) {
+	    viewPortStart = savedInstanceState.getLong("viewportstart");
+	    viewPortWidth = savedInstanceState.getLong("viewportwidth");
+	    redraw = true;
+	}
 
         // Load data
         getLoaderManager().initLoader(0, null, this);
@@ -154,7 +162,9 @@ public class GraphFragment extends Fragment
     @Override
     public void onLoadFinished(Loader<List<DatabaseLoader.DatabaseRow>> loader,
                                List<DatabaseLoader.DatabaseRow> data) {
-        //Log.d("FragLoader", "Done loading with " + data.size() + " items");
+	if (SettingsActivity.ENABLE_DEBUG)
+	    Log.d("FragLoader", "Done loading with " + data.size() + " items");
+
         locData = data;
         getActivity().setProgressBarIndeterminateVisibility(false);
 
@@ -169,20 +179,35 @@ public class GraphFragment extends Fragment
         } else {
             createGraphData();
 
-            drawGraph(((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)));
+            drawGraph(((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)), false);
         }
     }
 
     @Override
     public void onLoaderReset(Loader loader) {
-        getActivity().setProgressBarIndeterminateVisibility(true);
+	//if (getActivity() != null)
+	//    getActivity().setProgressBarIndeterminateVisibility(true);
         locData = null;
     }
 
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
-        if (graphSeries != null)
-            drawGraph((LinearLayout)view.findViewById(R.id.graph_fragment));
+        if (graphSeries != null) {
+	    // Restore state
+	    if (savedInstanceState != null) {
+		viewPortStart = savedInstanceState.getLong("viewportstart");
+		viewPortWidth = savedInstanceState.getLong("viewportwidth");
+		redraw = true;
+	    }
+            drawGraph((LinearLayout)view.findViewById(R.id.graph_fragment), redraw);
+	}
+    }
+
+    @Override
+    public void onSaveInstanceState(final Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putLong("viewportstart", viewPortStart);
+	outState.putLong("viewportwidth", viewPortWidth);
     }
 
     // Create the graph plot
@@ -190,8 +215,15 @@ public class GraphFragment extends Fragment
         int i = 0;
         long maxUsage = 0, timeStamp;
 
+	if (locData == null) {
+	    Log.e(getClass().getName(), "No data created by loader!");
+	    return;
+	}
+
         // Build the graph
-        //Log.d(getClass().getName(), "Creating data of len " + dbData.size());
+	if (SettingsActivity.ENABLE_DEBUG)
+	    Log.d(getClass().getName(), "Creating data of len " + locData.size());
+
         GraphView.GraphViewData[] graphData = new GraphView.GraphViewData[locData.size()];
         logMessages = new String[locData.size()];
 
@@ -200,6 +232,7 @@ public class GraphFragment extends Fragment
         else
             startTime = 0;
 
+	viewPortStart = startTime;
         for (DatabaseLoader.DatabaseRow row : locData) {
             timeStamp = row.getTime();
             endTime = timeStamp;
@@ -214,7 +247,9 @@ public class GraphFragment extends Fragment
             i++;
         }
 
-        Log.d("createGraphData", "Creating graph data len " + locData.size() + " max " + maxUsage);
+	if (SettingsActivity.ENABLE_DEBUG)
+	    Log.d("createGraphData", "Creating graph data len " + locData.size() + " max " + maxUsage);
+
         graphSeries = new GraphViewSeries(graphData);
         maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
 
@@ -231,7 +266,7 @@ public class GraphFragment extends Fragment
             maxStorage = (long)Math.ceil((double)maxStorage / 1000000000) * 1000000000;
     }
 
-    private void drawGraph(LinearLayout view) {
+    private void drawGraph(LinearLayout view, boolean redraw) {
         float textSize, dispScale, pointSize;
 
         // Determine text size
@@ -297,21 +332,21 @@ public class GraphFragment extends Fragment
         // Add selector callback
         storageGraph.setSelectHandler(this);
 
-        setViewport();
+        setViewport(redraw);
         if (view != null)
             view.addView(storageGraph);
         if (SettingsActivity.ENABLE_DEBUG)
-            Log.d(getClass().getName(), "Drew the graph");
+            Log.d(getClass().getName(), "Drew the graph, redraw=" + redraw);
     }
 
     // Helper to manipulate graph viewport
-    public void setViewport() {
+    public void setViewport(boolean redraw) {
         Calendar calcView[];
 
         // Start time
         calcView = new Calendar[2];
         calcView[0] = Calendar.getInstance();
-        calcView[0].setTimeInMillis(startTime);
+        calcView[0].setTimeInMillis(viewPortStart);
         calcView[1] = (Calendar)calcView[0].clone();
 
         if (timeInterval == null)
@@ -333,14 +368,15 @@ public class GraphFragment extends Fragment
         //Calendar.getInstance().getTimeInMillis() - calcView.getTimeInMillis();
         secondSelect = false;
         if (storageGraph != null) {
-            storageGraph.setViewPort(startTime, viewPortWidth);
+            storageGraph.setViewPort(viewPortStart, viewPortWidth);
             if (viewPortWidth > (endTime - startTime))
                 storageGraph.setScrollable(false);
             else {
                 storageGraph.setScrollable(true);
-                storageGraph.scrollToEnd();
+		if (!redraw)
+		    storageGraph.scrollToEnd();
             }
-            Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + startTime +
+            Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + viewPortStart +
                     " - " + viewPortWidth);
         }
     }
@@ -366,6 +402,11 @@ public class GraphFragment extends Fragment
     @Override
     public void onGraphSelect(int i, int start) {
         String [] logLines;
+
+	if (logMessages == null) {
+	    Log.e(getClass().getName(), "No log messages to display!");
+	    return;
+	}
 
         if (logMessages.length == 0) {
             logLines = new String[2];

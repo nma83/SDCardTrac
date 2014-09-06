@@ -21,4 +21,17 @@
         <item>43200000</item>
         <item>86400000</item>
     </string-array>
+
+    <string-array name="delete_before_entries">
+      <item>Now!</item>
+      <item>One week</item>
+      <item>One month</item>
+      <item>One year</item>
+    </string-array>
+    <string-array name="delete_before_val">
+      <item>0</item>
+      <item>604800000</item>
+      <item>2592000000</item>
+      <item>31536000000</item>
+    </string-array>
 </resources>

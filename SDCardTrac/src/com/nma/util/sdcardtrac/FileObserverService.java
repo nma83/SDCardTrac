@@ -51,11 +51,16 @@ public class FileObserverService extends Service {
 
     // Binder to talk to periodic tracking activity
     public class TrackingBinder extends Binder {
+	// Fetch events
         public ObservedEvent[] getAllEvents () {
             ObservedEvent[] retEvents = (ObservedEvent[]) eventsList.toArray();
             eventsList.clear();
             return retEvents;
         }
+	// Service handle
+	public FileObserverService getService() {
+	    return FileObserverService.this;
+	}
     }
     private final IBinder locBinder = new TrackingBinder();
 

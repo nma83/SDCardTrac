@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
@@ -44,15 +45,16 @@ public class GraphActivity extends ActionBarActivity
     public static final String TAB_NAME_EXT_STORAGE = "External";
     public static final String SHOW_HELP_TAG = "showHelp";
     private String interval;
-    ActionBar actionBar;
+    private ActionBar actionBar;
+    private Spinner durationSel;
     private boolean forceSettings = false;
     private boolean helpExit = false;
     private boolean showTips = false;
     private boolean alarmEnabled = false;
+    private boolean serviceBound = false;
 
     @Override
     public void onCreate(Bundle savedInstance) {
-        Spinner durationSel;
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstance);
@@ -100,8 +102,14 @@ public class GraphActivity extends ActionBarActivity
         // Start service
         alarmEnabled = pref.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
         boolean reInst = false;
-        if (savedInstance != null)
+        if (savedInstance != null) {
+	    Parcelable spinner;
             reInst = savedInstance.getBoolean(SettingsActivity.ALARM_RUNNING_KEY, false);
+	    interval = savedInstance.getString("interval", "Day");
+	    spinner = savedInstance.getParcelable("spinner");
+	    if (spinner != null)
+		durationSel.onRestoreInstanceState(spinner);
+	}
 
         if (alarmEnabled && !reInst) {
             Intent serviceIntent = new Intent(this, FileObserverService.class);
@@ -208,6 +216,8 @@ public class GraphActivity extends ActionBarActivity
     @Override
     protected void onSaveInstanceState(Bundle out) {
         out.putBoolean(SettingsActivity.ALARM_RUNNING_KEY, alarmEnabled);
+	out.putString("interval", interval);
+	out.putParcelable("spinner", durationSel.onSaveInstanceState());
     }
 
     // Help popup

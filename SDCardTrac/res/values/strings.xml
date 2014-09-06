@@ -10,7 +10,8 @@
     <string name="enable_tracker">Enable tracking</string>
 
     <string name="tracker_update_interval">Update interval</string>
-    <string name="tracker_delete_data">Clear history</string>
+    <string name="tracker_delete_data">Delete history</string>
+    <string name="tracker_delete_before">Delete data older than</string>
 
     <string name="changelog_dialog_title">Files changed</string>
     <string name="changelog_dialog_button">Done</string>
@@ -40,4 +41,11 @@
     <string name="no_files">None</string>
     <string name="exit_help">exitHelp</string>
     <string name="enable_debug">Enable logging</string>
+
+    <string name="pref_general_title">General</string>
+    <string name="pref_advanced_title">Advanced</string>
+    <string name="pref_help_title">Help</string>
+    <string name="pref_web_page">Flattr this app</string>
+
+    <string name="advanced_option_1">Coming soon</string>
 </resources>

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+  <PreferenceCategory 
+      android:title="@string/pref_general_title"
+      android:key="pref_key_general_settings">
     <CheckBoxPreference
         android:key = "enable_tracker"
         android:title = "@string/enable_tracker"
@@ -15,13 +18,36 @@
         android:entryValues = "@array/update_intervals_phase_val"
         android:defaultValue= "900000"
         />
-    <Preference
+    <ListPreference
+	android:enabled="false"
         android:key = "tracker_delete_data"
         android:title = "@string/tracker_delete_data"
+        android:dialogTitle = "@string/tracker_delete_before"
+        android:entries = "@array/delete_before_entries"
+        android:entryValues = "@array/delete_before_val"
+        android:defaultValue= "0"
         />
+  </PreferenceCategory>
+
+  <PreferenceCategory 
+      android:title="@string/pref_advanced_title"
+      android:key="pref_key_advanced_settings">
+    <Preference android:title="@string/advanced_option_1" 
+		android:key="advanced_option_1"
+		android:enabled="false"/>
+  </PreferenceCategory>
+
+  <PreferenceCategory 
+      android:title="@string/pref_help_title"
+      android:key="pref_key_help_settings">
     <CheckBoxPreference
         android:key = "enable_debug"
         android:title = "@string/enable_debug"
         android:defaultValue="false"
         />
+    <Preference android:title="@string/pref_web_page" >
+      <intent android:action="android.intent.action.VIEW"
+              android:data="https://flattr.com/submit/auto?user_id=narendra_m_a&amp;url=http%3A%2F%2Fgithub.com%2Fnma83%2FSDCardTrac" />
+    </Preference>
+  </PreferenceCategory>
 </PreferenceScreen>
