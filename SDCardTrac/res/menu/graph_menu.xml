@@ -6,6 +6,11 @@
         android:title="Refresh"
         sdcardtrac:showAsAction="ifRoom">
     </item>
+    <item android:id="@+id/graph_search"
+        android:icon="@drawable/ic_action_search"
+        android:title="Search"
+        sdcardtrac:showAsAction="ifRoom">
+    </item>
     <item android:id="@+id/graph_settings"
         android:title="Settings">
     </item>

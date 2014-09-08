@@ -48,4 +48,6 @@
     <string name="pref_web_page">Flattr this app</string>
 
     <string name="advanced_option_1">Coming soon</string>
+
+    <string name="search_hint">Search history</string>
 </resources>

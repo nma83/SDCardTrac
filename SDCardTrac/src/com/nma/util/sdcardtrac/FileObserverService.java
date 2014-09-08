@@ -215,30 +215,11 @@ public class FileObserverService extends Service {
             eventsList.clear();
     	}
     	
-    	/** Replaced with HashMap below 
-    	 * else {
+	// Check if storage is available
+	if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED ||
+	    Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED_READ_ONLY)
+	    return;
 
-    		// Compact the change log, remove duplicate entries
-    		// TODO: O(n^2) operation here, try to optimise, profile too
-    		for (ObservedEvent i : eventsList) {
-    			if (!i.duplicate) {
-    				for (ObservedEvent j : eventsList) {
-    					//    				Log.d(getClass().getName(), "Comparing hashes >" + (i == j) + "<");
-    					if (i.compareWith(j) && (i != j))
-    						j.duplicate = true;
-    				}
-
-    				uniqEvents.add(i);
-    				numLogs++;
-    			}
-    			//    		Log.d(getClass().getName(), "Listing event for: " + i.filePath + "@" + i.duplicate + "@" + numLogs);
-    		}
-
-    		eventsList.clear();
-    	}
-    	*/
-    	
-    	
     	// Get the space data
     	long totalSpace = Environment.getExternalStorageDirectory().getTotalSpace();
     	long freeSpace = Environment.getExternalStorageDirectory().getFreeSpace();

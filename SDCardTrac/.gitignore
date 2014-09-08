@@ -36,5 +36,11 @@ Thumbs.db
 bin
 .classpath
 .project
+.idea
+.gradle
+build
+gen
 
-/gen
+# Emacs backup
+*~
+

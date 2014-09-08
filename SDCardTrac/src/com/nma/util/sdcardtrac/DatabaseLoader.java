@@ -19,7 +19,10 @@ import java.util.List;
  */
 
 public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.DatabaseRow>> {
-    private String storageType;
+    private String storageType, loaderType, searchQuery;
+
+    public static final String DB_LOADER_ALL_VALS = "ALL";
+    public static final String DB_LOADER_SEARCH = "SEARCH";
 
     // Class to store data required for a point in the Graph
     public static class DatabaseRow {
@@ -55,19 +58,32 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
         super(context);
         trackingDB = new DatabaseManager(getContext());
         storageType = type;
+	loaderType = DB_LOADER_ALL_VALS;
         //Log.d("SDDBLoader", "Created loader");
+    }
+
+    public DatabaseLoader(Context context, String type, String query) {
+        super(context);
+        trackingDB = new DatabaseManager(getContext());
+        storageType = type;
+	loaderType = DB_LOADER_SEARCH;
+	searchQuery = query;
     }
 
     @Override
     public List<DatabaseLoader.DatabaseRow> loadInBackground() {
-        long maxUsage = 0;
         ArrayList <DatabaseRow> retVal;
-        long maxStorage;
 
         trackingDB.openToRead();
         // TODO: use start/end time hooks
-        ArrayList<ContentValues> dbData = (ArrayList<ContentValues>)trackingDB.getValues(
-                storageType, 0, 0);
+        ArrayList<ContentValues> dbData;
+
+	if (loaderType.equals(DB_LOADER_ALL_VALS)) {
+	    dbData = (ArrayList<ContentValues>)trackingDB.getValues(storageType, 0, 0);
+	} else {
+	    dbData = (ArrayList<ContentValues>)trackingDB.searchValues(storageType, searchQuery);
+	}
+
         retVal = new ArrayList<DatabaseRow>();
 
         int i = 0;
@@ -81,13 +97,13 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
             changeLog = dateFmt.format(dateStamp)
                     + ":\n" + changeLog;
 
-            if (usage > maxUsage) maxUsage = usage;
+            //if (usage > maxUsage) maxUsage = usage;
             retVal.add(new DatabaseRow(timeStamp, usage, changeLog));
         }
 
         trackingDB.close();
         loadedDB = retVal;
-        Log.d("SDDBLoader", "Returning size " + retVal.size());
+        //Log.d("SDDBLoader", "Returning size " + retVal.size());
 
         return retVal;
     }

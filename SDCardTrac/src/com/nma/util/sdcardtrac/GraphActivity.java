@@ -130,15 +130,17 @@ public class GraphActivity extends ActionBarActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.graph_refresh:
-                refreshGraph(false, interval);
-                return true;
-            case R.id.graph_settings:
-                showSettings();
-                return true;
-            case R.id.help:
-                showHelp();
-                return true;
+	case R.id.graph_refresh:
+	    refreshGraph(false, interval);
+	    return true;
+	case R.id.graph_search:
+	    return onSearchRequested();
+	case R.id.graph_settings:
+	    showSettings();
+	    return true;
+	case R.id.help:
+	    showHelp();
+	    return true;
         }
 
         return false;
