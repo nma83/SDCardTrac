@@ -92,7 +92,7 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
             long usage = Long.parseLong((String)d.get(DatabaseManager.DELTA_COLUMN));
             String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
             Date dateStamp = new Date(timeStamp);
-            SimpleDateFormat dateFmt = new SimpleDateFormat("dd LLL yyyy, K:m a");
+            SimpleDateFormat dateFmt = new SimpleDateFormat("dd LLL yyyy, KK:mm a");
             //changeLog = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
             changeLog = dateFmt.format(dateStamp)
                     + ":\n" + changeLog;

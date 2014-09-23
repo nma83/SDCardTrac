@@ -75,13 +75,13 @@ class DatabaseManager {
 	String selectCrit;
 		
 	if (startTime == 0 && endTime == 0) {
-	    selectCrit = "";
+	    selectCrit = null;
 	} else if (startTime == 0) {
-	    selectCrit = "where " + ID_COLUMN + " <= " + Long.toString(endTime);
+	    selectCrit = ID_COLUMN + " <= " + Long.toString(endTime);
 	} else if (endTime == 0) {
-	    selectCrit = "where " + ID_COLUMN + " >= " + Long.toString(startTime);
+	    selectCrit = ID_COLUMN + " >= " + Long.toString(startTime);
 	} else {
-	    selectCrit = "where " + ID_COLUMN + " <= " + Long.toString(endTime)
+	    selectCrit = ID_COLUMN + " <= " + Long.toString(endTime)
 		+ " and " + ID_COLUMN + " >= " + Long.toString(startTime);
 	}
 	
@@ -91,7 +91,7 @@ class DatabaseManager {
     public List<ContentValues> searchValues(String fromTable, String query) {
 	String selectCrit;
 
-	selectCrit = " where " + LOG_COLUMN + " like '%" + query + "%'";
+	selectCrit = LOG_COLUMN + " like '%" + query + "%'";
 	return runSelect(selectCrit);
     }
 
@@ -99,8 +99,10 @@ class DatabaseManager {
 	ArrayList <ContentValues> retList = new ArrayList<ContentValues>();
 	if (SettingsActivity.ENABLE_DEBUG)
 	    Log.d(getClass().getName(), "Running select: " + selectCrit);
-	Cursor cursor = sqLiteDatabase.rawQuery
-	    ("select * from " + MYDATABASE_TABLE + " " + selectCrit + ";", null);
+	//Cursor cursor = sqLiteDatabase.rawQuery
+	//    ("select * from " + MYDATABASE_TABLE + " " + selectCrit + ";", null);
+	Cursor cursor = sqLiteDatabase.query(MYDATABASE_TABLE, null, selectCrit,
+					     null, null, null, ID_COLUMN + " ASC", null);
 
 	int indTime = cursor.getColumnIndex(ID_COLUMN);
 	int indDelta = cursor.getColumnIndex(DELTA_COLUMN);

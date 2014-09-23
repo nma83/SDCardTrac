@@ -27,14 +27,11 @@
         android:entryValues = "@array/delete_before_val"
         android:defaultValue= "0"
         />
-  </PreferenceCategory>
 
-  <PreferenceCategory 
-      android:title="@string/pref_advanced_title"
-      android:key="pref_key_advanced_settings">
-    <Preference android:title="@string/advanced_option_1" 
-		android:key="advanced_option_1"
-		android:enabled="false"/>
+      <CheckBoxPreference android:title="@string/show_hidden"
+          android:summary="@string/show_hidden_sum"
+          android:key="show_hidden"
+          android:defaultValue="false" />
   </PreferenceCategory>
 
   <PreferenceCategory 

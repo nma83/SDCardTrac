@@ -36,6 +36,7 @@ public class SettingsActivity extends PreferenceActivity
     public static String APP_BOOTED_KEY = "app_booted";
     public static String STORE_TRIGGER_KEY = "tracker_update_interval";
     public static String ENABLE_DEBUG_KEY = "enable_debug";
+    public static String SHOW_HIDDEN_KEY = "show_hidden";
     public static boolean ENABLE_DEBUG = false;
 
     // Preferences

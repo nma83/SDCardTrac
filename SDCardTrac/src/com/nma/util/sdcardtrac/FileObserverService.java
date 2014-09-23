@@ -216,8 +216,9 @@ public class FileObserverService extends Service {
     	}
     	
 	// Check if storage is available
-	if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED ||
-	    Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED_READ_ONLY)
+	String storeState = Environment.getExternalStorageState();
+	if (!(storeState.equals(Environment.MEDIA_MOUNTED) ||
+	      storeState.equals(Environment.MEDIA_MOUNTED_READ_ONLY)))
 	    return;
 
     	// Get the space data

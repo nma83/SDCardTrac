@@ -1,7 +1,9 @@
 package com.nma.util.sdcardtrac;
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -29,7 +31,7 @@ import java.util.List;
 import java.util.HashMap;
 
 public class ChangeLogFragment extends DialogFragment
-    implements DialogInterface.OnClickListener {
+        implements DialogInterface.OnClickListener {
     public static final String CHANGELOG_FRAG_MSGS_ARG = "logMsgs";
     public static final String CHANGELOG_FRAG_HEAD_ARG = "logHead";
     public static final int NUM_CHANGELOG_VIEWS = 3; // Created, deleted, modified
@@ -68,9 +70,9 @@ public class ChangeLogFragment extends DialogFragment
             changeList.add(new ArrayList<String>());
         }
 
-	adapter = new MyExpandableListAdapter[NUM_CHANGELOG_VIEWS];
-	for (int i = 0; i < NUM_CHANGELOG_VIEWS; i++)
-	    adapter[i] = new MyExpandableListAdapter(getActivity());
+        adapter = new MyExpandableListAdapter[NUM_CHANGELOG_VIEWS];
+        for (int i = 0; i < NUM_CHANGELOG_VIEWS; i++)
+            adapter[i] = new MyExpandableListAdapter(getActivity(), true);
 
         if (logMsgs.length == 0) {
             logMsgs = new CharSequence[2];
@@ -156,6 +158,8 @@ public class ChangeLogFragment extends DialogFragment
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            boolean showHidden = false;
+
             View root = inflater.inflate(R.layout.view_changelog, container, false);
             ExpandableListView listView = (ExpandableListView)root.findViewById(R.id.changelog_list);
             TextView textView = (TextView)root.findViewById(R.id.changelog_heading);
@@ -170,31 +174,60 @@ public class ChangeLogFragment extends DialogFragment
 //            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
 //                    android.R.layout.simple_list_item_1, android.R.id.text1, listItems);
 
-	    // Filter common basenames into groups
-	    Arrays.sort(listItems);
-	    adapter[position].clear();
+            // Filter common basenames into groups
+            Arrays.sort(listItems);
+            adapter[position].clear();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            showHidden = prefs.getBoolean(SettingsActivity.SHOW_HIDDEN_KEY, false);
 
-	    // Check for valid path name
-	    if (listItems[0].startsWith("/")) {
-		HashMap <String, Boolean> baseNames = new HashMap<String, Boolean>();
-		for (String i : listItems) {
-		    String iBaseName = extractBaseName(i, 3); // Extract 3 dir levels
-		    //Log.d("tmp", "Base name=" + iBaseName + " for " + i);
-		    if (!baseNames.containsKey(iBaseName)) {
-			adapter[position].addGroup(iBaseName);
-			baseNames.put(iBaseName, true);
-		    }
-		    if (iBaseName.length() != i.length())
-			adapter[position].addChild(i.substring(iBaseName.length() + 1, i.length()));
-		}
-		// No status 
-		statView.setVisibility(View.GONE);
-	    } else {
-		// Set status view
-		statView.setText(getString(R.string.no_files));
-	    }
+            // Check for valid path name
+            if (listItems[0].startsWith("/")) {
+                String statTxt = "";
+                int hidden = 0;
+
+                HashMap <String, Boolean> baseNames = new HashMap<String, Boolean>();
+                for (String i : listItems) {
+                    String iBaseName = extractBaseName(i, 3); // Extract 3 dir levels
+                    //Log.d("tmp", "Base name=" + iBaseName + " for " + i);
+                    if (!baseNames.containsKey(iBaseName)) {
+                        adapter[position].addGroup(iBaseName);
+                        baseNames.put(iBaseName, true);
+                    }
+                    if (iBaseName.length() != i.length()) {
+                        String fileName = i.substring(iBaseName.length() + 1, i.length());
+                        // Hidden?
+                        if (showHidden || !fileName.matches(".*/\\..*"))
+                            adapter[position].addChild(fileName);
+                        else if (!showHidden)
+                            hidden++;
+                    }
+                }
+                // Set status
+                //statView.setVisibility(View.GONE);
+                String plural = "";
+                if (listItems.length > 1)
+                    plural = "s";
+
+                statTxt = Integer.toString(listItems.length) + " file" + plural;
+                if (hidden > 0)
+                    statTxt = statTxt + ", " + hidden + " hidden";
+
+                statView.setText(statTxt);
+            } else {
+                // Set status view
+                statView.setText(getString(R.string.no_files));
+            }
 
             listView.setAdapter(adapter[position]);
+            listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+                @Override
+                public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+                    // Set selected for marquee
+                    v.setSelected(true);
+                    v.invalidate();
+                    return true;
+                }
+            });
 
             return root;
         }
@@ -202,17 +235,17 @@ public class ChangeLogFragment extends DialogFragment
 
     // Helper to extract base name
     private static String extractBaseName(String fileName, int levels) {
-	int i = 0;
-	int currInd = 0;
-	for (i = 0; i <= levels; i++) {
-	    currInd = fileName.indexOf("/", currInd) + 1;
-	    //Log.d("tmp2", "name " + fileName + "[" + i + "]=" + currInd);
-	}
-	// Return base name
-	if (currInd > levels)
-	    return fileName.substring(0, currInd - 1);
-	else
-	    return fileName;
+        int i = 0;
+        int currInd = 0;
+        for (i = 0; i <= levels; i++) {
+            currInd = fileName.indexOf("/", currInd) + 1;
+            //Log.d("tmp2", "name " + fileName + "[" + i + "]=" + currInd);
+        }
+        // Return base name
+        if (currInd > levels)
+            return fileName.substring(0, currInd - 1);
+        else
+            return fileName;
     }
 
     private class ChangeLogAdapter extends FragmentPagerAdapter {

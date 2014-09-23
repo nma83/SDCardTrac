@@ -46,7 +46,8 @@
             android:label="@string/title_activity_settings" >
         </activity>
 
-	<activity android:name=".SearchableActivity" >
+	<activity android:name=".SearchableActivity" 
+		  android:label="@string/title_search" >
           <intent-filter>
             <action android:name="android.intent.action.SEARCH" />
           </intent-filter>

@@ -355,58 +355,58 @@ abstract public class GraphView extends LinearLayout {
         if (finished) {
             int selectIndex = 1;
             double selectSample = 0;
-	    int startPoint = 0;
-	    boolean viewBefore = false;
+            int startPoint = 0;
+            boolean viewBefore = false;
 
             // Calculate nearest sample point
             selectSample = GraphView.this.transformPointToSample
-		(inEvent.getX(), GraphViewConfig.BORDER, graphViewContentView.getWidth());
+                    (inEvent.getX(), GraphViewConfig.BORDER, graphViewContentView.getWidth());
 
             for (GraphViewDataInterface i : data) {
                 if (i.getX() >= selectSample) {
                     retVal = true;
                     break;
                 }
-		if (i.getX() < viewportStart) {
-		    startPoint = selectIndex;
-		    viewBefore = true;
-		}
+                if (i.getX() < viewportStart) {
+                    startPoint = selectIndex;
+                    viewBefore = true;
+                }
                 selectIndex++;
             }
-	    if (viewBefore)
-		startPoint++;
-	    else
-		startPoint = 0;
+            if (viewBefore)
+                startPoint++;
+            else
+                startPoint = 0;
 
             /*if (retVal == false) {
                 selectIndex = 0;
 		}*/
-	    if (selectIndex >= data.length)
-		selectIndex = data.length - 1;
+            if (selectIndex >= data.length)
+                selectIndex = data.length - 1;
 
-	    // Check if point is in view
-	    if (viewportSize != 0) {
-		boolean redrawIt = false;
-		if (data[selectIndex].getX() > (viewportStart + viewportSize)) {
-		    viewportStart = data[selectIndex].getX() - (viewportSize / 2);
-		    redrawIt = true;
-		} else if (data[selectIndex].getX() < viewportStart) {
-		    if (data[selectIndex].getX() > (viewportSize / 2))
-			viewportStart = data[selectIndex].getX() - (viewportSize / 2);
-		    else
-			viewportStart = data[selectIndex].getX();
-		    redrawIt = true;
-		}
+            boolean redrawIt = false;
+            // Check if point is in view
+            if (viewportSize != 0) {
+                if (data[selectIndex].getX() > (viewportStart + viewportSize)) {
+                    viewportStart = data[selectIndex].getX() - (viewportSize / 2);
+                    redrawIt = true;
+                } else if (data[selectIndex].getX() < viewportStart) {
+                    if (data[selectIndex].getX() > (viewportSize / 2))
+                    viewportStart = data[selectIndex].getX() - (viewportSize / 2);
+                    else
+                    viewportStart = data[selectIndex].getX();
+                    redrawIt = true;
+                }
 
-		if (redrawIt)
-		    redrawAll();
-	    } else
-		startPoint = 0;
+                if (redrawIt)
+                    redrawAll();
+            } else
+                startPoint = 0;
 
             // Call overriden method
-            if (selectHandler != null)
+            if (selectHandler != null && !redrawIt)
                 selectHandler.onGraphSelect(selectIndex, startPoint);
-            retVal = true;
+            retVal = !redrawIt;
         }
 
         return retVal;
