@@ -7,11 +7,15 @@ package com.nma.util.sdcardtrac;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.app.SearchManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
@@ -24,7 +28,7 @@ import java.util.HashMap;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class SearchableActivity extends FragmentActivity
+public class SearchableActivity extends ActionBarActivity
         implements LoaderManager.LoaderCallbacks<List<DatabaseLoader.DatabaseRow>> {
     private String query;
     private List<DatabaseLoader.DatabaseRow> locData;
@@ -37,7 +41,23 @@ public class SearchableActivity extends FragmentActivity
         setContentView(R.layout.search);
 
         // Get the intent, verify the action and get the query
-        Intent intent = getIntent();
+        //if (savedInstanceState == null)
+        handleIntent(getIntent());
+
+        adapter = new MyExpandableListAdapter(this, false);
+        progBar = (ProgressBar)findViewById(R.id.search_progress);
+
+        /*if (locData != null)
+            showResult();*/
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             query = intent.getStringExtra(SearchManager.QUERY);
             if (SettingsActivity.ENABLE_DEBUG)
@@ -45,11 +65,7 @@ public class SearchableActivity extends FragmentActivity
             // Load data
             getSupportLoaderManager().restartLoader(0, null, this);
         }
-
-        adapter = new MyExpandableListAdapter(this, false);
-        progBar = (ProgressBar)findViewById(R.id.search_progress);
     }
-
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         setProgressBarIndeterminateVisibility(true);
@@ -64,6 +80,48 @@ public class SearchableActivity extends FragmentActivity
     @Override
     public void onLoadFinished(Loader<List<DatabaseLoader.DatabaseRow>> loader,
                                List<DatabaseLoader.DatabaseRow> data) {
+        if (SettingsActivity.ENABLE_DEBUG)
+            Log.d(getClass().getName(), "Done loading with " + data.size() + " items");
+        locData = data;
+        showResult();
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+        locData = null;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.search_menu, menu);
+        MenuItem searchViewItem = menu.findItem(R.id.search_again);
+        SearchView searchView = (SearchView) searchViewItem.getActionView();
+        if (searchView != null)
+            searchView.setIconifiedByDefault(false);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.search_again:
+                return onSearchRequested();
+            case R.id.search_settings:
+                showSettings();
+                return true;
+        }
+
+        return false;
+    }
+
+    // Goto settings menu
+    public void showSettings() {
+        Intent show = new Intent(this, SettingsActivity.class);
+        startActivity(show);
+    }
+
+    private void showResult() {
         ExpandableListView list;
         TextView text;
         int groupPos = 0;
@@ -72,9 +130,6 @@ public class SearchableActivity extends FragmentActivity
 
         HashMap <String, Integer> fileMap = new HashMap<String, Integer>();
 
-        if (SettingsActivity.ENABLE_DEBUG)
-            Log.d(getClass().getName(), "Done loading with " + data.size() + " items");
-        locData = data;
         setProgressBarIndeterminateVisibility(false);
 
         // Fill in the list
@@ -121,30 +176,16 @@ public class SearchableActivity extends FragmentActivity
         }
 
         list.setAdapter(adapter);
-        /*
-    list.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-            @Override
-            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                // Set multi line
-                ((TextView)v).setSingleLine(false);
-                //((TextView)v).setMaxLines(10);
-                v.invalidate();
-                return false;
-            }
-        }); */
 
-        String done;
-        done = Integer.toString(total) + " results";
+        String done, plural = "";
+        if (total != 1) plural = "s";
+
+        done = Integer.toString(total) + " result" + plural;
         if (!showHidden && hidden > 0)
             done = done + ", " + hidden + " hidden";
         text.setText(done);
         progBar.setProgress(100);
         progBar.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        locData = null;
     }
 
     private static String convertToString(String name, long time) {

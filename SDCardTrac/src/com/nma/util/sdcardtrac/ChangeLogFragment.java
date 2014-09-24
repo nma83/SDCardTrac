@@ -205,7 +205,7 @@ public class ChangeLogFragment extends DialogFragment
                 // Set status
                 //statView.setVisibility(View.GONE);
                 String plural = "";
-                if (listItems.length > 1)
+                if (listItems.length != 1)
                     plural = "s";
 
                 statTxt = Integer.toString(listItems.length) + " file" + plural;
