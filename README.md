@@ -5,9 +5,11 @@ Description
 -----------
 
 The storage tracker application has the following main features:
+
 1. Record changes to the file-system using [inotify](en.wikipedia.org/wiki/Inotify)
 2. Report these changes to the user as a graph showing usage over time
 3. Search the recorded changes with file name
+
 Only the primary external storage device is supported as of now. There is a plan to extend to all
 available storage devices as exposed by Android framework.
 Allow a day or two after installing the app for it collect some data to display.
