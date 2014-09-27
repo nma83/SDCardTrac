@@ -31,7 +31,8 @@
         \n\n
             - <b>Touch</b> to select a point \n
             - <b>Touch again</b> to view activity at selected point \n
-            - <b>Swipe</b> right to view different types of activity \n\n
+            - <b>Swipe</b> right in the dialog to view different types of activity \n
+            - <b>Search</b> activity history for files \n\n
         <u><big>Credits</big></u>\n
         - <a href="http://android-graphview.org/">android-graphview.org</a>\n
         - <a href="http://findicons.com">findicons.com</a>

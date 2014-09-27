@@ -224,7 +224,8 @@ public class GraphFragment extends Fragment
 	if (SettingsActivity.ENABLE_DEBUG)
 	    Log.d(getClass().getName(), "Creating data of len " + locData.size());
 
-        GraphView.GraphViewData[] graphData = new GraphView.GraphViewData[locData.size()];
+        GraphView.GraphViewData[] graphData = new GraphView.GraphViewData[1];
+        ArrayList <GraphView.GraphViewData> dataArr = new ArrayList<GraphView.GraphViewData>();
         logMessages = new String[locData.size()];
 
         if (locData.size() > 0)
@@ -237,7 +238,11 @@ public class GraphFragment extends Fragment
             timeStamp = row.getTime();
             endTime = timeStamp;
             long usage = Math.abs(row.getUsage());
-            graphData[i] = new GraphView.GraphViewData(timeStamp, usage);
+            //graphData[i] = new GraphView.GraphViewData(timeStamp, usage);
+            if (row.getChangeLog().contains("/")) // Add only paths
+                dataArr.add(new GraphView.GraphViewData(timeStamp, usage));
+            else
+                continue;
 
             if (usage > maxUsage)
                 maxUsage = usage;
@@ -247,8 +252,10 @@ public class GraphFragment extends Fragment
             i++;
         }
 
+        graphData = dataArr.toArray(graphData);
+
 	if (SettingsActivity.ENABLE_DEBUG)
-	    Log.d("createGraphData", "Creating graph data len " + locData.size() + " max " + maxUsage);
+	    Log.d("createGraphData", "Creating graph data len " + dataArr.size() + " max " + maxUsage);
 
         graphSeries = new GraphViewSeries(graphData);
         maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();

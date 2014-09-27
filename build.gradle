@@ -3,3 +3,8 @@ dependencies {
     project(":SDCardTrac")
 }
 
+ext.compileSdkVersion=15
+ext.buildToolsVersion="19.1"
+ext.minSdkVersion=10
+ext.targetSdkVersion=10
+
