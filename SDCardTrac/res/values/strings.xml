@@ -9,9 +9,8 @@
 
     <string name="enable_tracker">Enable tracking</string>
 
-    <string name="tracker_update_interval">Update interval</string>
-    <string name="tracker_delete_data">Delete history</string>
-    <string name="tracker_delete_before">Delete data older than</string>
+    <string name="tracker_update_interval">Update interval…</string>
+    <string name="tracker_delete_data">Delete history…</string>
 
     <string name="changelog_dialog_title">Files changed</string>
     <string name="changelog_dialog_button">Done</string>
@@ -43,10 +42,27 @@
     <string name="exit_help">exitHelp</string>
     <string name="enable_debug">Enable logging</string>
 
+    <string name="delete_title">Delete data older than</string>
+    <string name="delete_now">Now!</string>
+    <string name="delete_week">Week</string>
+    <string name="delete_month">Month</string>
+    <string name="delete_year">Year</string>
+    <string name="delete_warn">WARNING: This operation cannot be undone!</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name='data_deleted'>Data deleted</string>
+
     <string name="pref_general_title">General</string>
     <string name="pref_advanced_title">Advanced</string>
     <string name="pref_help_title">Help</string>
-    <string name="pref_web_page">Flattr this app</string>
+
+    <string name="pref_donate_title">Donate</string>
+    <string name="pref_web_page">Flattr this app…</string>
+    <string name="pref_web_page_sum">Opens the flattr.com page in the browser</string>
+    <string name="pref_bitcoin_app">Donate Bitcoins…</string>
+    <string name="pref_bitcoin_app_sum">Send Bitcoins using the Bitcoin Wallet app</string>
+    <string name="pref_bitcoin_satoshi">Enter number of Bitcoins in Satoshis</string>
+    <string name="donate_thanks">Thank you for the donation!</string>
 
     <string name="advanced_option_1">Coming soon</string>
 

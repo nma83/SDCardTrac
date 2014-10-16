@@ -18,15 +18,11 @@
         android:entryValues = "@array/update_intervals_phase_val"
         android:defaultValue= "900000"
         />
-    <ListPreference
-	android:enabled="false"
-        android:key = "tracker_delete_data"
-        android:title = "@string/tracker_delete_data"
-        android:dialogTitle = "@string/tracker_delete_before"
-        android:entries = "@array/delete_before_entries"
-        android:entryValues = "@array/delete_before_val"
-        android:defaultValue= "0"
-        />
+
+      <com.nma.util.sdcardtrac.DeleteDataPreference
+          android:key="tracker_delete_data"
+          android:title="@string/tracker_delete_data"
+          />
 
       <CheckBoxPreference android:title="@string/show_hidden"
           android:summary="@string/show_hidden_sum"
@@ -42,9 +38,17 @@
         android:title = "@string/enable_debug"
         android:defaultValue="false"
         />
-    <Preference android:title="@string/pref_web_page" >
-      <intent android:action="android.intent.action.VIEW"
-              android:data="https://flattr.com/submit/auto?user_id=narendra_m_a&amp;url=http%3A%2F%2Fgithub.com%2Fnma83%2FSDCardTrac" />
-    </Preference>
   </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/pref_donate_title">
+        <Preference android:title="@string/pref_bitcoin_app"
+            android:summary="@string/pref_bitcoin_app_sum"
+            android:key="pref_bitcoin_key">
+        </Preference>
+        <Preference android:title="@string/pref_web_page"
+            android:summary="@string/pref_web_page_sum">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://flattr.com/submit/auto?user_id=narendra_m_a&amp;url=http%3A%2F%2Fgithub.com%2Fnma83%2FSDCardTrac" />
+        </Preference>
+    </PreferenceCategory>
 </PreferenceScreen>

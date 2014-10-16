@@ -8,14 +8,13 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
-import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
+import java.util.Calendar;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -29,7 +28,7 @@ import android.widget.Toast;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends PreferenceActivity
-    implements SharedPreferences.OnSharedPreferenceChangeListener {
+    implements SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceClickListener {
     public static final long DEFAULT_UPDATE_INTERVAL_MSEC = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
     public static final int DEFAULT_START_OFFSET_SEC = 10;
     public static String ALARM_RUNNING_KEY = "enable_tracker";
@@ -37,6 +36,10 @@ public class SettingsActivity extends PreferenceActivity
     public static String STORE_TRIGGER_KEY = "tracker_update_interval";
     public static String ENABLE_DEBUG_KEY = "enable_debug";
     public static String SHOW_HIDDEN_KEY = "show_hidden";
+    public static String BITCOIN_KEY = "pref_bitcoin_key";
+    public static String DELETE_DATA_KEY = "tracker_delete_data";
+    private static final String BITCOIN_ADDRESS = "16bxTv1fP8X2QN5SWXc1AcKhhA1tJQKcTa";
+    private static final int BITCOIN_REQ_ID = 0;
     public static boolean ENABLE_DEBUG = false;
 
     // Preferences
@@ -87,6 +90,7 @@ public class SettingsActivity extends PreferenceActivity
 
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
+        findPreference(BITCOIN_KEY).setOnPreferenceClickListener(this);
     }
 
     @Override
@@ -177,7 +181,7 @@ public class SettingsActivity extends PreferenceActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        //Log.d(getClass().getName(), "SharedPref change: " + key + "-" + ALARM_RUNNING_KEY);
+        Log.d(getClass().getName(), "SharedPref change: " + key);
         if (key.equals(ALARM_RUNNING_KEY)) {
             //CheckBoxPreference p = (CheckBoxPreference)findPreference(key);
             boolean keyVal;
@@ -210,10 +214,54 @@ public class SettingsActivity extends PreferenceActivity
                         storeTriggerInterval);
                 Log.d(getClass().getName(), "Changing alarms: " + selS);
             }
+        } else if (key.equals(DELETE_DATA_KEY)) {
+            deleteData(Integer.parseInt(sharedPreferences.getString(DELETE_DATA_KEY, "0")));
         } else if (key.equals(ENABLE_DEBUG_KEY)) {
-	    boolean keyVal = sharedPreferences.getBoolean(key, false);
-	    Log.d(getClass().getName(), "Debug log enable was " + ENABLE_DEBUG + ", is " + keyVal);
-	    ENABLE_DEBUG = keyVal;
-	}
+            boolean keyVal = sharedPreferences.getBoolean(key, false);
+            Log.d(getClass().getName(), "Debug log enable was " + ENABLE_DEBUG + ", is " + keyVal);
+            ENABLE_DEBUG = keyVal;
+        } else if (key.equals(BITCOIN_KEY)) {
+            BitcoinIntegration.requestForResult(this, BITCOIN_REQ_ID, BITCOIN_ADDRESS);
+        }
+    }
+
+    // For donation
+    @Override
+    public boolean onPreferenceClick(Preference preference)
+    {
+        String key = preference.getKey();
+
+        if (key.equals(BITCOIN_KEY))
+            BitcoinIntegration.requestForResult(this, BITCOIN_REQ_ID, BITCOIN_ADDRESS);
+
+        return false;
+    }
+
+    // Delete data from DB
+    private void deleteData(int deleteBefore) {
+        DatabaseManager db;
+        Calendar calcView;
+        long startMillis;
+
+        calcView = Calendar.getInstance();
+        calcView.add(Calendar.SECOND, -deleteBefore);
+        startMillis = calcView.getTimeInMillis();
+
+        // Fork this off
+        db = new DatabaseManager(this);
+        db.openToWrite();
+        if (deleteBefore == 0)
+            db.deleteAll();
+        else
+            db.deleteRows(startMillis);
+        Toast.makeText(this, R.string.data_deleted, Toast.LENGTH_SHORT).show();
+    }
+
+    // Bitcoin donation callback
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == BITCOIN_REQ_ID && resultCode == RESULT_OK) {
+            Toast.makeText(this, R.string.donate_thanks, Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -87,18 +87,30 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
         retVal = new ArrayList<DatabaseRow>();
 
         int i = 0;
+        long prevUsage = 0;
+
+        if (dbData.size() > 0)
+            prevUsage = Long.parseLong((String)dbData.get(0).get(DatabaseManager.DELTA_COLUMN));
+
         for (ContentValues d : dbData) {
             long timeStamp = Long.parseLong((String)d.get(DatabaseManager.ID_COLUMN));
             long usage = Long.parseLong((String)d.get(DatabaseManager.DELTA_COLUMN));
+            long delta = (usage - prevUsage);
+            String plus;
             String changeLog = (String)d.get(DatabaseManager.LOG_COLUMN);
             Date dateStamp = new Date(timeStamp);
             SimpleDateFormat dateFmt = new SimpleDateFormat("dd LLL yyyy, KK:mm a");
             //changeLog = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-            changeLog = dateFmt.format(dateStamp)
-                    + ":\n" + changeLog;
-
+            if (delta < 0)
+                plus = "";
+            else
+                plus = "+";
+            changeLog = dateFmt.format(dateStamp) + " (" + plus +
+                    convertToStorageUnits(delta)
+                    + "):\n" + changeLog;
             //if (usage > maxUsage) maxUsage = usage;
             retVal.add(new DatabaseRow(timeStamp, usage, changeLog));
+            prevUsage = usage;
         }
 
         trackingDB.close();
@@ -136,14 +148,15 @@ public class DatabaseLoader extends AsyncTaskLoader <List<DatabaseLoader.Databas
         String retValue;
         long scaling;
         String suffix;
+        double absVal = Math.abs(value);
 
-        if ((value / 1000) < 1) { // Under a KB, keep as is
+        if ((absVal / 1000) < 1) { // Under a KB, keep as is
             scaling = 1;
             suffix = "B";
-        } else if ((value / 1000000) < 1) { // KB
+        } else if ((absVal / 1000000) < 1) { // KB
             scaling = 1000;
             suffix = "KB";
-        } else if ((value / 1000000000) < 1) { // MB
+        } else if ((absVal / 1000000000) < 1) { // MB
             scaling = 1000000;
             suffix = "MB";
         } else { // GB

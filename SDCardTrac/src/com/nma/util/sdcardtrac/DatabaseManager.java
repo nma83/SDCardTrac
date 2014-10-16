@@ -67,7 +67,20 @@ class DatabaseManager {
     }
 
     public int deleteAll(){
-	return sqLiteDatabase.delete(MYDATABASE_TABLE, null, null);
+        if (SettingsActivity.ENABLE_DEBUG)
+            Log.d(getClass().getName(), "Deleting all!!!");
+	    return sqLiteDatabase.delete(MYDATABASE_TABLE, "1", null);
+    }
+
+    public void deleteRows(long upto) {
+        String selectCrit;
+        selectCrit = ID_COLUMN + " < " + upto;
+
+        if (SettingsActivity.ENABLE_DEBUG)
+            Log.d(getClass().getName(), "Running delete: " + selectCrit);
+        int numRows = sqLiteDatabase.delete(MYDATABASE_TABLE, selectCrit, null);
+        if (SettingsActivity.ENABLE_DEBUG)
+            Log.d(getClass().getName(), "Deleted " + numRows + " rows");
     }
 
     // Retrieve database content between startTime and endTime (0 means don't care)

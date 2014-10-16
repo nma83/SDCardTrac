@@ -30,8 +30,8 @@
     </string-array>
     <string-array name="delete_before_val">
       <item>0</item>
-      <item>604800000</item>
-      <item>2592000000</item>
-      <item>31536000000</item>
+      <item>604800</item>
+      <item>2592000</item>
+      <item>31536000</item>
     </string-array>
 </resources>

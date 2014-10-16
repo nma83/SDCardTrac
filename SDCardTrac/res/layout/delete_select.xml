@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RadioGroup
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/delete_group">
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="@string/delete_now"
+            android:id="@+id/delete_now"/>
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="@string/delete_week"
+            android:id="@+id/delete_week"/>
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="@string/delete_month"
+            android:id="@+id/delete_month"/>
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="@string/delete_year"
+            android:id="@+id/delete_year"/>
+    </RadioGroup>
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/delete_warn" />
+</LinearLayout>

@@ -25,6 +25,8 @@ import android.widget.AbsListView;
 import android.widget.TextView;
 import android.widget.BaseExpandableListAdapter;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -124,6 +126,11 @@ public class ChangeLogFragment extends DialogFragment
         //dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         //dialog.getWindow() .setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         dialog.setTitle(title);
+        TextView titleView = (TextView)dialog.findViewById(android.R.id.title);
+        //titleView.setTextAppearance(getActivity(), android.R.style.TextAppearance_DeviceDefault_Medium);
+        titleView.setSingleLine(false);
+        titleView.setGravity(Gravity.CENTER_HORIZONTAL);
+
         return dialog;
         //return builder.create();
     }

@@ -13,8 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -179,7 +177,10 @@ public class GraphFragment extends Fragment
         } else {
             createGraphData();
 
-            drawGraph(((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)), false);
+            if (graphSeries != null)
+                drawGraph(((LinearLayout)getView().findViewById(R.id.graph_fragment_layout)), false);
+            else
+                Toast.makeText(getActivity(), R.string.db_empty_error, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -256,6 +257,11 @@ public class GraphFragment extends Fragment
 
 	if (SettingsActivity.ENABLE_DEBUG)
 	    Log.d("createGraphData", "Creating graph data len " + dataArr.size() + " max " + maxUsage);
+
+        if (dataArr.size() == 0) {
+            graphSeries = null;
+            return;
+        }
 
         graphSeries = new GraphViewSeries(graphData);
         maxStorage = Environment.getExternalStorageDirectory().getTotalSpace();
@@ -420,16 +426,23 @@ public class GraphFragment extends Fragment
             logLines[0] = "No Data";
             logLines[1] = "-";
         } else {
+            int showInd = i;
+
+            if (i > 0 && start > 0) showInd -= 1;
             //Log.d(getClass().getName(), "Selected index[" + i + "] = " + logMessages[i]);
             // Split each line of the log
-            logLines = logMessages[i].split("\n");
+            logLines = logMessages[showInd].split("\n");
         }
 
         if (secondSelect == false && i == selectedPoint)
             secondSelect = true;
         if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "onSelect " + i + ", selected " + selectedPoint + ", starting " + start);
-        storageGraph.highlightSample(0, true, i - start);
+
+        int selInd = (i - start);
+        if (start > 0) selInd += 1;
+
+        storageGraph.highlightSample(0, true, selInd);
         if (secondSelect) {
             // Call dialog
             ChangeLogFragment dialog = ChangeLogFragment.newInstance(logLines);
