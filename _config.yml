@@ -1,0 +1,32 @@
+# Site settings
+title:       StorageTrac
+email:       nma82@github.com
+author:      "Narendra M A"
+description: "App to track external storage usage"
+baseurl:     "/SDCardTrac"
+url:         "http://nma83.github.io/"
+
+# Optional features
+animated:           true
+show_related_posts: false
+show_post_footers:  false
+
+# Social icons
+show_social_icons: false
+github_username: nma83
+twitter_username: narendra_m_a
+google_plus_id:
+linkedin_username:
+bitcoin_url: 16bxTv1fP8X2QN5SWXc1AcKhhA1tJQKcTa
+paypal_url:
+flattr_button: https://flattr.com/thing/3457864
+
+# Build settings
+markdown:     kramdown
+permalink:    pretty
+paginate:     3
+sass:
+  compressed: true
+
+kramdown:
+  input: GFM
