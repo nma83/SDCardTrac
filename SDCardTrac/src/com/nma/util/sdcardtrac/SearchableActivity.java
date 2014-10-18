@@ -17,7 +17,11 @@
 
 package com.nma.util.sdcardtrac;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Point;
+import android.graphics.Typeface;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
@@ -26,9 +30,12 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.app.SearchManager;
+import android.util.TypedValue;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.ProgressBar;
@@ -46,12 +53,39 @@ public class SearchableActivity extends ActionBarActivity
     private List<DatabaseLoader.DatabaseRow> locData;
     private MyExpandableListAdapter adapter;
     private ProgressBar progBar;
+    //private int numItemsOnScreen;
+    //private static final int SCREEN_FRACTION = 80; // 80% of screen for list
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.search);
+/*
+        // A rough guess at number of items to fit in a screen
+        int dispHeight = 0, dispWidth = 0;
+        Point size = new Point();
+        WindowManager w = getWindowManager();
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            w.getDefaultDisplay().getSize(size);
+            dispHeight = size.y;
+            dispWidth = size.x;
+        } else {
+            Display d = w.getDefaultDisplay();
+            dispHeight = d.getHeight();
+            dispWidth = d.getWidth();
+        }
+
+        int textHeight = getTextHeight(this, getString(R.string.search_no_data),
+                (int) GraphFragment.GRAPHVIEW_TEXT_SIZE_DIP, dispWidth);
+        if (textHeight == 0) textHeight = 1; // Safety
+        // 3 lines of text, fit into fraction of the screen
+        numItemsOnScreen = (dispHeight * SCREEN_FRACTION) / (100 * textHeight * 3);
+        // Ceil
+        numItemsOnScreen = ((numItemsOnScreen + 10) / 10) * 10;
+        Log.d(getClass().getName(), "Calculated screen height=" + dispHeight + ", text height="
+                        + textHeight + ", num items=" + numItemsOnScreen);
+                        */
         // Get the intent, verify the action and get the query
         //if (savedInstanceState == null)
         handleIntent(getIntent());
@@ -72,6 +106,8 @@ public class SearchableActivity extends ActionBarActivity
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             query = intent.getStringExtra(SearchManager.QUERY);
+            // Replace spaces with wildcard
+            //query = query.replace(' ', '%');
             if (SettingsActivity.ENABLE_DEBUG)
                 Log.d(getClass().getName(), "Starting search: " + query);
             // Load data
@@ -95,7 +131,7 @@ public class SearchableActivity extends ActionBarActivity
         if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "Done loading with " + data.size() + " items");
         locData = data;
-        showResult();
+        showResult(0);
     }
 
     @Override
@@ -133,7 +169,8 @@ public class SearchableActivity extends ActionBarActivity
         startActivity(show);
     }
 
-    private void showResult() {
+    // Show a page of results
+    private void showResult(int startPage) {
         ExpandableListView list;
         TextView text;
         int groupPos = 0;
@@ -151,7 +188,14 @@ public class SearchableActivity extends ActionBarActivity
         showHidden = prefs.getBoolean(SettingsActivity.SHOW_HIDDEN_KEY, false);
 
         adapter.clear();
-
+/*
+        listStart = startPage * numItemsOnScreen;
+        listEnd = listStart + numItemsOnScreen;
+        if (listEnd > locData.size())
+            listEnd = locData.size();
+        Log.d(getClass().getName(), "Fetching from " + listStart + " to " + listEnd);
+        pageData = (ArrayList)locData.subList(listStart, listEnd);
+*/
         for (DatabaseLoader.DatabaseRow i : locData) {
             long timeStamp;
             String changeLog[];
@@ -198,6 +242,19 @@ public class SearchableActivity extends ActionBarActivity
         text.setText(done);
         progBar.setProgress(100);
         progBar.setVisibility(View.GONE);
+    }
+
+    public static int getTextHeight(Context context, CharSequence text, int textSize,
+                                    int deviceWidth) { //, Typeface typeface,int padding) {
+        TextView textView = new TextView(context);
+        textView.setPadding(0, 0, 0, 0);
+        textView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL));
+        textView.setText(text, TextView.BufferType.SPANNABLE);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSize);
+        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth, View.MeasureSpec.AT_MOST);
+        int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        textView.measure(widthMeasureSpec, heightMeasureSpec);
+        return textView.getMeasuredHeight();
     }
 
     private static String convertToString(String name, long time) {

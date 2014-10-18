@@ -14,7 +14,8 @@
 
    <ExpandableListView
        android:layout_width="fill_parent"
-       android:layout_height="fill_parent"
+       android:layout_height="0dp"
+       android:layout_weight="1"
        android:id="@+id/search_list" />
 
    <ProgressBar
@@ -22,5 +23,37 @@
        android:layout_height="fill_parent"
        android:layout_gravity="center_horizontal|center_vertical"
        android:id="@+id/search_progress" />
-
+<!--
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal|bottom">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_first_page"
+            android:background="@drawable/ic_navigation_back"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_prev_page"
+            android:background="@drawable/ic_navigation_previous_item"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_pos_text"
+            android:text="0/0"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_next_page"
+            android:background="@drawable/ic_navigation_next_item"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_last_page"
+            android:background="@drawable/ic_navigation_forward"/>
+    </LinearLayout>
+    -->
 </LinearLayout>

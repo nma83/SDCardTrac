@@ -60,7 +60,7 @@
     <string name="pref_web_page">Flattr this app…</string>
     <string name="pref_web_page_sum">Opens the flattr.com page in the browser</string>
     <string name="pref_bitcoin_app">Donate Bitcoins…</string>
-    <string name="pref_bitcoin_app_sum">Send Bitcoins using the Bitcoin Wallet app</string>
+    <string name="pref_bitcoin_app_sum">Send Bitcoins using a Bitcoin wallet app</string>
     <string name="pref_bitcoin_satoshi">Enter number of Bitcoins in Satoshis</string>
     <string name="donate_thanks">Thank you for the donation!</string>
 

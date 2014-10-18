@@ -76,7 +76,7 @@ public class GraphFragment extends Fragment
     private long maxStorage, startTime, endTime, viewPortStart, viewPortWidth;
     private ProgressDialog loadingDBDialog;
 
-    private static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
+    public static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
     private static final float GRAPHVIEW_POINT_SIZE_DIP = 4.0f;
     private static boolean firstView = true;
     private boolean secondSelect = false;
