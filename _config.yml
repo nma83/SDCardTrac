@@ -24,7 +24,6 @@ flattr_button: https://flattr.com/thing/3457864
 # Build settings
 markdown:     kramdown
 permalink:    pretty
-paginate:     3
 sass:
   compressed: true
 
