@@ -1,0 +1,23 @@
+.iconheader img {
+  float: left;
+  width: 100px;
+  height: 100px;
+}
+
+.iconheader h1 {
+  position: relative;
+  top: 18px;
+  left: 10px;
+}
+
+.screenshot img {
+  height: 384px;
+  width: 216px;
+  display:block; 
+  margin:0 auto;
+}
+
+.screenshot td {
+  text-align: center;
+}
+
