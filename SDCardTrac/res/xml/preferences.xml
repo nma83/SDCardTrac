@@ -33,7 +33,13 @@
   <PreferenceCategory 
       android:title="@string/pref_help_title"
       android:key="pref_key_help_settings">
-    <CheckBoxPreference
+      <Preference android:title="@string/pref_help_page"
+          android:summary="@string/pref_help_page_sum">
+          <intent android:action="android.intent.action.VIEW"
+              android:data="http://nma83.github.io/SDCardTrac/" />
+      </Preference>
+
+      <CheckBoxPreference
         android:key = "enable_debug"
         android:title = "@string/enable_debug"
         android:defaultValue="false"
