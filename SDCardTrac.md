@@ -3,7 +3,7 @@ layout: page
 ---
 
 <div class="iconheader">
-  <img src="images/ic_launcher.png" alt="logo" />
+  <img src="{{ site:baseurl }}/images/ic_launcher.png" alt="logo" />
   <h1>StorageTrac</h1>
 </div>
 
@@ -16,7 +16,7 @@ Tap once to select a point.
 
 <div class="screenshot">
 <table><tr><td>
-<img src="/images/screen1.png">
+<img src="{{ site:baseurl }}/images/screen1.png">
 </td></tr></table>
 </div>
 
@@ -29,13 +29,13 @@ Tap selected point again for a popup showing recorded activity. Swipe between cr
 <table>
 <tr>
 <td>
-<img src="images/screen2-1.png"></img>
+<img src="{{ site:baseurl }}/images/screen2-1.png"></img>
 </td>
 <td>
-<img src="images/screen2-2.png"></img>
+<img src="{{ site:baseurl }}/images/screen2-2.png"></img>
 </td>
 <td>
-<img src="/images/screen2-3.png"></img>
+<img src="{{ site:baseurl }}/images/screen2-3.png"></img>
 </td>
 </tr>
 </table>
@@ -49,10 +49,10 @@ Use the search dialog to search all recorded activity with a file name, or a par
 <table>
 <tr>
 <td>
-<img src="/images/screen3-1.png"></img>
+<img src="{{ site:baseurl }}/images/screen3-1.png"></img>
 </td>
 <td>
-<img src="/images/screen3-2.png"></img>
+<img src="{{ site:baseurl }}/images/screen3-2.png"></img>
 </td>
 </tr>
 </table>
@@ -76,3 +76,5 @@ Credits
 -------
 * [GraphView](https://github.com/jjoe64/GraphView) for plotting.
 * [Icons](http://findicons.com) used in the app.
+
+App licensed under [GPLv3](http://www.gnu.org/copyleft/gpl.html).
