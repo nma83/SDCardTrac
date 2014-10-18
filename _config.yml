@@ -3,7 +3,7 @@ title:       StorageTrac
 email:       nma82@github.com
 author:      "Narendra M A"
 description: "App to track external storage usage"
-baseurl:     "/SDCardTrac"
+baseurl:     ""
 url:         "http://nma83.github.io"
 
 # Optional features
