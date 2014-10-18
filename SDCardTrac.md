@@ -3,7 +3,7 @@ layout: page
 ---
 
 <div class="iconheader">
-  <img src="/images/ic_launcher.png" alt="logo" />
+  <img src="images/ic_launcher.png" alt="logo" />
   <h1>StorageTrac</h1>
 </div>
 
@@ -29,10 +29,10 @@ Tap selected point again for a popup showing recorded activity. Swipe between cr
 <table>
 <tr>
 <td>
-<img src="/images/screen2-1.png"></img>
+<img src="images/screen2-1.png"></img>
 </td>
 <td>
-<img src="/images/screen2-2.png"></img>
+<img src="images/screen2-2.png"></img>
 </td>
 <td>
 <img src="/images/screen2-3.png"></img>
