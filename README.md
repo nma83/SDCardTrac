@@ -20,6 +20,8 @@ Download APK at:
 
 More technical documentation can be found in this [Google doc](https://docs.google.com/document/pub?id=1Q0nKqhSEhYnrWML8Vk1b0qgkhIejjRnSrjsRRN-oB40).
 
+Visit the [site](http://nma83.github.io/SDCardTrac/) for more details.
+
 Credits
 -------
 * [GraphView](https://github.com/jjoe64/GraphView) for plotting.
