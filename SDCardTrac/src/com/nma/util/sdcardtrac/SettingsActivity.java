@@ -22,9 +22,11 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -65,7 +67,8 @@ public class SettingsActivity extends PreferenceActivity
     // State
     private boolean alarmRunning = false;
     private boolean boundToService = false;
-    AlarmHelper alarmHelp;
+    private AlarmHelper alarmHelp;
+    private CheckBoxPreference alarmChk;
 
     // Handle to running service
     private FileObserverService.TrackingBinder serviceBind;
@@ -79,6 +82,42 @@ public class SettingsActivity extends PreferenceActivity
         }
     }
 */
+
+    // Task to start service
+    public class StartWatching extends AsyncTask<Boolean, Integer, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Boolean... params) {
+            // Control the service
+            Intent serviceIntent = new Intent(SettingsActivity.this, FileObserverService.class);
+
+            if (params[0]) {
+                serviceIntent.setAction(Intent.ACTION_MAIN);
+                startService(serviceIntent);
+                // Bind to service
+                //bindService(serviceIntent, serviceConn, Context.BIND_AUTO_CREATE);
+            } else {
+                //unbindService(serviceConn);
+                //boundToService = false;
+                serviceIntent.setAction(Intent.ACTION_DELETE);
+                startService(serviceIntent);
+                // TODO: stopService(serviceIntent);
+            }
+
+            return params[0];
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (alarmChk != null) {
+                alarmChk.setEnabled(true);
+                if (result)
+                    alarmChk.setSummary(R.string.enabled_tracker);
+                else
+                    alarmChk.setSummary(R.string.disabled_tracker);
+            }
+        }
+    }
 
     // Connection to service
     private ServiceConnection serviceConn = new ServiceConnection() {
@@ -108,6 +147,11 @@ public class SettingsActivity extends PreferenceActivity
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
         findPreference(BITCOIN_KEY).setOnPreferenceClickListener(this);
+        alarmChk = (CheckBoxPreference)findPreference(ALARM_RUNNING_KEY);
+        if (alarmRunning)
+            alarmChk.setSummary(R.string.enabled_tracker);
+        else
+            alarmChk.setSummary(R.string.disabled_tracker);
     }
 
     @Override
@@ -162,21 +206,7 @@ public class SettingsActivity extends PreferenceActivity
 
     // Start the background service
     public void backgroundService(boolean enable) {
-        // Control the service
-        Intent serviceIntent = new Intent(this, FileObserverService.class);
-
-        if (enable) {
-            serviceIntent.setAction(Intent.ACTION_MAIN);
-            startService(serviceIntent);
-            // Bind to service
-            //bindService(serviceIntent, serviceConn, Context.BIND_AUTO_CREATE);
-        } else {
-            //unbindService(serviceConn);
-            //boundToService = false;
-            serviceIntent.setAction(Intent.ACTION_DELETE);
-            startService(serviceIntent);
-            // TODO: stopService(serviceIntent);
-        }
+        new StartWatching().execute(enable);
     }
 
     @Override
@@ -207,8 +237,11 @@ public class SettingsActivity extends PreferenceActivity
                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                     alarmRunning = alarmHelp.manageAlarm(true, alarmRunning, DEFAULT_START_OFFSET_SEC,
                             storeTriggerInterval);
+                    alarmChk.setEnabled(false);
+                    alarmChk.setSummary(R.string.enabling_tracker);
                     backgroundService(true);
-                    Log.d(getClass().getName(), "Enabling alarms: " + storeTriggerInterval);
+                    if (ENABLE_DEBUG)
+                        Log.d(getClass().getName(), "Enabling alarms: " + storeTriggerInterval);
                 } else {
                     // TODO make a dialog
                     Toast.makeText(this, R.string.media_not_mounted, Toast.LENGTH_SHORT).show();
@@ -217,6 +250,7 @@ public class SettingsActivity extends PreferenceActivity
                 // Disable alarms
                 alarmRunning = alarmHelp.manageAlarm(false, alarmRunning, DEFAULT_START_OFFSET_SEC,
                         storeTriggerInterval);
+                alarmChk.setSummary(R.string.disabled_tracker);
             }
         } else if (key.equals(STORE_TRIGGER_KEY)) {
             if (alarmRunning) {

@@ -8,6 +8,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="enable_tracker">Enable tracking</string>
+    <string name="enabled_tracker">Enabled</string>
+    <string name="disabled_tracker">Disabled</string>
+    <string name="enabling_tracker">Enabling…</string>
 
     <string name="tracker_update_interval">Update interval…</string>
     <string name="tracker_delete_data">Delete history…</string>
