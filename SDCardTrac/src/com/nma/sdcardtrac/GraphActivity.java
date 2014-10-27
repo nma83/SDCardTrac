@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.nma.util.sdcardtrac;
+package com.nma.sdcardtrac;
 
 import android.content.Intent;
 import android.content.SharedPreferences;

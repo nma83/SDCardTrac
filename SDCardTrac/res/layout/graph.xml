@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <fragment android:name="com.nma.util.sdcardtrac.GraphFragment"
+    <fragment android:name="com.nma.sdcardtrac.GraphFragment"
         android:id="@+id/graph_fragment"
         android:layout_weight="1"
         android:layout_width="0dp"

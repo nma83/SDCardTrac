@@ -3,15 +3,15 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="com.nma.util.sdcardtrac.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="com.nma.sdcardtrac.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_general" />
 
     <header
-        android:fragment="com.nma.util.sdcardtrac.SettingsActivity$NotificationPreferenceFragment"
+        android:fragment="com.nma.sdcardtrac.SettingsActivity$NotificationPreferenceFragment"
         android:title="@string/pref_header_notifications" />
 
     <header
-        android:fragment="com.nma.util.sdcardtrac.SettingsActivity$DataSyncPreferenceFragment"
+        android:fragment="com.nma.sdcardtrac.SettingsActivity$DataSyncPreferenceFragment"
         android:title="@string/pref_header_data_sync" />
 
 </preference-headers>

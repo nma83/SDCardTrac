@@ -3,7 +3,7 @@
  * Copyright (C) 2012 Narendra M.A.
 */
 
-package com.nma.util.sdcardtrac;
+package com.nma.sdcardtrac;
 
 import java.io.File;
 import java.util.ArrayList;

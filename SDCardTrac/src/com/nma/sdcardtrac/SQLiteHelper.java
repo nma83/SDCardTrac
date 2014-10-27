@@ -3,7 +3,7 @@
  * Copyright (C) 2012 Narendra M.A.
 */
 
-package com.nma.util.sdcardtrac;
+package com.nma.sdcardtrac;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

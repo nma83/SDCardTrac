@@ -1,4 +1,4 @@
-package com.nma.util.sdcardtrac;
+package com.nma.sdcardtrac;
 
 import android.content.ContentValues;
 import android.os.Environment;

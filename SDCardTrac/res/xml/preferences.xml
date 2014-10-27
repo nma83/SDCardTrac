@@ -19,7 +19,7 @@
         android:defaultValue= "900000"
         />
 
-      <com.nma.util.sdcardtrac.DeleteDataPreference
+      <com.nma.sdcardtrac.DeleteDataPreference
           android:key="tracker_delete_data"
           android:title="@string/tracker_delete_data"
           />
