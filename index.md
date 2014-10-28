@@ -61,11 +61,15 @@ Use the search dialog to search all recorded activity with a file name, or a par
 ### Download
 
 * [F-Droid](https://f-droid.org/repository/browse/?fdid=com.nma.util.sdcardtrac)
-* [Play store](https://play.google.com/store/apps/details?id=com.nma.sdcardtrac) (incompatible with other sources!)
+* [Play store](https://play.google.com/store/apps/details?id=com.nma.sdcardtrac) ([incompatible](#install_note) with others)
 * [XDA Dev DB](http://forum.xda-developers.com/android/apps-games/storagetrac-record-plot-changes-t2860608)
 
 Only the primary external storage device is supported as of now. There is a plan to extend to all available storage devices as exposed by Android framework.
 Allow a day or two after installing the app for it collect some data to display.
+
+<a name="install_note"></a>
+The app in Play store is signed using a different key than that in F-Droid and XDA, and also differs in the package name. 
+Hence, data *cannot be migrated* from a F-Droid installed app to an installation through Play store.
 
 ### <a name="donate"></a> Donate
 
