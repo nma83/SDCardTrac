@@ -61,6 +61,7 @@ Use the search dialog to search all recorded activity with a file name, or a par
 ### Download
 
 * [F-Droid](https://f-droid.org/repository/browse/?fdid=com.nma.util.sdcardtrac)
+* [Play store](https://play.google.com/store/apps/details?id=com.nma.sdcardtrac) (incompatible with other sources!)
 * [XDA Dev DB](http://forum.xda-developers.com/android/apps-games/storagetrac-record-plot-changes-t2860608)
 
 Only the primary external storage device is supported as of now. There is a plan to extend to all available storage devices as exposed by Android framework.
@@ -68,7 +69,7 @@ Allow a day or two after installing the app for it collect some data to display.
 
 ### <a name="donate"></a> Donate
 
-You can donate through Bitcoins or [Flattr](http://flattr.com).
+You can donate by purchasing the app on [Google Play](https://play.google.com/store/apps/details?id=com.nma.sdcardtrac), sending Bitcoins or [Flattr](https://flattr.com/thing/3457864).
 My Bitcoin address is <b>16bxTv1fP8X2QN5SWXc1AcKhhA1tJQKcTa</b>.
 
 
