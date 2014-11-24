@@ -205,7 +205,7 @@ abstract public class GraphView extends LinearLayout {
 
                     if (!((event.getAction() & MotionEvent.ACTION_UP) == MotionEvent.ACTION_UP)) {
                         origDown = event.getX();
-                        handleSelect(event, false);
+                        handleSelect(event, false, false, 0);
                     }
 				}
 				if ((event.getAction() & MotionEvent.ACTION_UP) == MotionEvent.ACTION_UP) {
@@ -218,7 +218,7 @@ abstract public class GraphView extends LinearLayout {
 
                     // Sample select callback
                     if (!hadMoved) {
-                        handleSelect(event, true);
+                        handleSelect(event, true, false, 0);
                     }
 				}
 				if ((event.getAction() & MotionEvent.ACTION_MOVE) == MotionEvent.ACTION_MOVE) {
@@ -346,7 +346,8 @@ abstract public class GraphView extends LinearLayout {
 	}
 
     // Arguments are the event that occured and whether that finishes the select
-    private boolean handleSelect(MotionEvent inEvent, boolean finished) {
+    private boolean handleSelect(MotionEvent inEvent, boolean finished, boolean force,
+                                 int forceSelect) {
         GraphViewDataInterface[] data;
 
         boolean retVal = false;
@@ -359,12 +360,14 @@ abstract public class GraphView extends LinearLayout {
             boolean viewBefore = false;
 
             // Calculate nearest sample point
-            selectSample = GraphView.this.transformPointToSample
-                    (inEvent.getX(), GraphViewConfig.BORDER, graphViewContentView.getWidth());
+            if (force && forceSelect < data.length)
+                selectSample = data[forceSelect].getX();
+            else
+                selectSample = GraphView.this.transformPointToSample
+                        (inEvent.getX(), GraphViewConfig.BORDER, graphViewContentView.getWidth());
 
             for (GraphViewDataInterface i : data) {
                 if (i.getX() >= selectSample) {
-                    retVal = true;
                     break;
                 }
                 if (i.getX() < viewportStart) {
@@ -378,9 +381,6 @@ abstract public class GraphView extends LinearLayout {
             else
                 startPoint = 0;
 
-            /*if (retVal == false) {
-                selectIndex = 0;
-		}*/
             if (selectIndex >= data.length)
                 selectIndex = data.length - 1;
 
@@ -410,6 +410,16 @@ abstract public class GraphView extends LinearLayout {
         }
 
         return retVal;
+    }
+
+    // Helper to move to selected index
+    public void gotoSample(int seriesInd, int sampleInd) {
+        GraphViewDataInterface[] data;
+
+        data = graphSeries.get(seriesInd).values;
+        if (sampleInd < data.length) {
+            handleSelect(null, true, true, sampleInd);
+        }
     }
 
     abstract public interface GraphSelectHandler {

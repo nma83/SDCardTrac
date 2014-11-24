@@ -68,8 +68,6 @@ public class GraphActivity extends ActionBarActivity
         actionBar.setCustomView(R.layout.graph_action_bar);
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-        // TEMP
-        Log.d(getClass().getName(), "Creating 1");
         actionBar.addTab(actionBar.newTab().setText(TAB_NAME_EXT_STORAGE)
                 .setTabListener(new GraphTabListener(this, TAB_NAME_EXT_STORAGE)));
         /*Log.d(getClass().getName(), "Creating 2");
@@ -142,6 +140,13 @@ public class GraphActivity extends ActionBarActivity
         }
 
         return false;
+    }
+
+    // Refresh graph on resume
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshGraph(false, interval);
     }
 
     // Refresh all graphs
