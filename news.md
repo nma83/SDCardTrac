@@ -7,9 +7,11 @@ layout: page
 ## 24 November 2014
 
 v0.9 released with:
+
 * Navigation buttons
 
 Updates that I would like to have in the 1.0 release:
+
 * Proper app state management across lifecycle events
 * Storage history analysis
   * Rate of change in storage usage
