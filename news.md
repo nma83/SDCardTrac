@@ -12,7 +12,7 @@ v0.9 released with:
 Updates that I would like to have in the 1.0 release:
 * Proper app state management across lifecycle events
 * Storage history analysis
-  * Rate of storage usage
+  * Rate of change in storage usage
   * Rank causes of increase in used space (app data/pictures etc)
 
 ## 19 October 2014
