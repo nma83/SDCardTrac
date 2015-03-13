@@ -30,7 +30,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.CustomLabelFormatter;
@@ -57,7 +60,8 @@ import java.lang.Math;
  */
 
 public class GraphFragment extends Fragment
-    implements LoaderManager.LoaderCallbacks<List<DatabaseLoader.DatabaseRow>>, GraphView.GraphSelectHandler {
+    implements LoaderManager.LoaderCallbacks<List<DatabaseLoader.DatabaseRow>>, GraphView.GraphSelectHandler,
+        Button.OnClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     public static final String ARG_STORAGE_TYPE = "storage_type";
@@ -74,14 +78,17 @@ public class GraphFragment extends Fragment
     private GraphViewSeries graphSeries;
     private String graphLabel;
     private long maxStorage, startTime, endTime, viewPortStart, viewPortWidth;
-    private ProgressDialog loadingDBDialog;
 
     public static final float GRAPHVIEW_TEXT_SIZE_DIP = 8.0f;
     private static final float GRAPHVIEW_POINT_SIZE_DIP = 4.0f;
     private static boolean firstView = true;
     private boolean secondSelect = false;
     private int selectedPoint = 0;
+    private int navSelect = 0;
+    private int graphDataLen = 0;
     private boolean redraw = false;
+    private boolean buttonNav = false;
+    private boolean buttonSelect = false;
 
     /**
      * Use this factory method to create a new instance of
@@ -211,14 +218,28 @@ public class GraphFragment extends Fragment
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
         if (graphSeries != null) {
-	    // Restore state
-	    if (savedInstanceState != null) {
-		viewPortStart = savedInstanceState.getLong("viewportstart");
-		viewPortWidth = savedInstanceState.getLong("viewportwidth");
-		redraw = true;
-	    }
-            drawGraph((LinearLayout)view.findViewById(R.id.graph_fragment), redraw);
-	}
+            // Restore state
+            if (savedInstanceState != null) {
+                viewPortStart = savedInstanceState.getLong("viewportstart");
+                viewPortWidth = savedInstanceState.getLong("viewportwidth");
+                redraw = true;
+            }
+            drawGraph((LinearLayout)view.findViewById(R.id.graph_fragment_layout), redraw);
+        }
+
+        // Setup navigation callbacks
+        ImageButton graphFirst, graphLast, graphNext, graphPrev, graphList;
+        graphFirst = (ImageButton)view.findViewById(R.id.graph_first);
+        graphLast = (ImageButton)view.findViewById(R.id.graph_last);
+        graphPrev = (ImageButton)view.findViewById(R.id.graph_prev);
+        graphNext = (ImageButton)view.findViewById(R.id.graph_next);
+        graphList = (ImageButton)view.findViewById(R.id.graph_view_list);
+
+        graphFirst.setOnClickListener(this);
+        graphLast.setOnClickListener(this);
+        graphPrev.setOnClickListener(this);
+        graphNext.setOnClickListener(this);
+        graphList.setOnClickListener(this);
     }
 
     @Override
@@ -251,7 +272,7 @@ public class GraphFragment extends Fragment
         else
             startTime = 0;
 
-	viewPortStart = startTime;
+	    viewPortStart = startTime;
         for (DatabaseLoader.DatabaseRow row : locData) {
             timeStamp = row.getTime();
             endTime = timeStamp;
@@ -294,6 +315,9 @@ public class GraphFragment extends Fragment
             maxStorage = (long)Math.ceil((double)maxUsage / 1000000000) * 1000000000;
         else
             maxStorage = (long)Math.ceil((double)maxStorage / 1000000000) * 1000000000;
+
+        navSelect = dataArr.size() - 1;
+        graphDataLen = navSelect;
     }
 
     private void drawGraph(LinearLayout view, boolean redraw) {
@@ -363,8 +387,9 @@ public class GraphFragment extends Fragment
         storageGraph.setSelectHandler(this);
 
         setViewport(redraw);
-        if (view != null)
+        if (view != null) {
             view.addView(storageGraph);
+        }
         if (SettingsActivity.ENABLE_DEBUG)
             Log.d(getClass().getName(), "Drew the graph, redraw=" + redraw);
     }
@@ -403,8 +428,8 @@ public class GraphFragment extends Fragment
                 storageGraph.setScrollable(false);
             else {
                 storageGraph.setScrollable(true);
-		if (!redraw)
-		    storageGraph.scrollToEnd();
+                if (!redraw)
+                    storageGraph.scrollToEnd();
             }
             Log.d("GraphFrag", "Updated viewport to " + timeInterval + ", " + viewPortStart +
                     " - " + viewPortWidth);
@@ -460,14 +485,63 @@ public class GraphFragment extends Fragment
         if (start > 0) selInd += 1;
 
         storageGraph.highlightSample(0, true, selInd);
-        if (secondSelect) {
+        if ((secondSelect && !buttonNav) || buttonSelect) {
             // Call dialog
             ChangeLogFragment dialog = ChangeLogFragment.newInstance(logLines);
             dialog.show(getActivity().getSupportFragmentManager(), "dialog");
         }
 
         selectedPoint = i;
+
+        if (!buttonNav)
+            navSelect = i;
+        buttonSelect = false;
+        buttonNav = false;
         secondSelect = false;
+    }
+
+    @Override
+    public void onClick(View v) {
+        int buttonId = v.getId();
+        boolean act = false;
+
+        switch (buttonId) {
+            case R.id.graph_first:
+                navSelect = 0; act = true;
+                break;
+            case R.id.graph_last:
+                navSelect = graphDataLen; act = true;
+                break;
+            case R.id.graph_prev:
+                if (navSelect > 0) {
+                    navSelect--;
+                    act = true;
+                }
+                break;
+            case R.id.graph_next:
+                if (navSelect < (graphDataLen - 1)) {
+                    navSelect++;
+                    act = true;
+                }
+                break;
+            case R.id.graph_view_list:
+                // Just show current point
+                act = true;
+                buttonSelect = true;
+                break;
+            default:
+                act = false;
+        }
+
+        if (SettingsActivity.ENABLE_DEBUG)
+            Log.d(getClass().getName(), "Button " + buttonId + " selected point=" + navSelect +
+            ", act=" + act);
+        if (act) {
+            buttonNav = true;
+            //if (buttonId != R.id.graph_view_list)
+            //    secondSelect = false;
+            storageGraph.gotoSample(0, navSelect);
+        }
     }
 
     /**

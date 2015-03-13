@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/graph_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,5 +10,25 @@
         android:id="@+id/graph_fragment"
         android:layout_weight="1"
         android:layout_width="0dp"
-        android:layout_height="0dp" />
-</LinearLayout>
+        android:layout_height="0dp"
+        tools:layout="@layout/fragment_graph" />
+<!--
+    <LinearLayout
+        android:id="@+id/graph_buttons"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_navigation_previous_item"/>
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_navigation_next_item"/>
+    </LinearLayout>
+    -->
+</RelativeLayout>
