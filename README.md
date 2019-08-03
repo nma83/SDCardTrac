@@ -1,6 +1,8 @@
 StorageTrac - An external storage tracking app for Android
 =========================================================
 
+**This project has been moved to https://gitlab.com/narendra_m_a/storagetrac.**
+
 Description
 -----------
 
